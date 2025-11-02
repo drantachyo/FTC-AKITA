@@ -1,4 +1,1 @@
-# Road Runner Quickstart
-
-Check out the [docs](https://rr.brott.dev/docs/v1-0/tuning/).
-
+![Banner](https://raw.githubusercontent.com/drantachyo/FTC-AKITA/refs/heads/master/hatiko.jpeg)
