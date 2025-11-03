@@ -26,8 +26,8 @@ public class BBFCmeep {
                         .strafeToLinearHeading(new Vector2d(14, -50), Math.toRadians(271))
                         .strafeToLinearHeading(new Vector2d(-19, -16), Math.toRadians(229))
                         .strafeToLinearHeading(new Vector2d(-19.1, -16), Math.toRadians(229))
-                        .build()
-        );
+                        .strafeToConstantHeading(new Vector2d(14,-14))
+                        .build()        );
 
         meepMeep.setBackground(MeepMeep.Background.FIELD_DECODE_OFFICIAL)
                 .setDarkMode(true)

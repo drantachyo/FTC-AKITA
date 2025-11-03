@@ -8,11 +8,14 @@ import com.acmerobotics.roadrunner.Action;
 
 public class Shooter {
     private DcMotor shooterMotor;
-    private Servo feeder;
+    private Servo gateServo;
+
+    private final double OPEN_POSITION = 1.0;
+    private final double CLOSE_POSITION = 0.65;
 
     public Shooter(HardwareMap hardwareMap) {
-        shooterMotor = hardwareMap.get(DcMotor.class, "Outtake"); // название из конфигурации
-        feeder = hardwareMap.get(Servo.class, "Feeder");           // название серво
+        shooterMotor = hardwareMap.get(DcMotor.class, "Outtake");
+        gateServo = hardwareMap.get(Servo.class, "GateServo");
     }
 
     public Action runShooter() {
@@ -23,15 +26,15 @@ public class Shooter {
         return new InstantAction(() -> shooterMotor.setPower(0));
     }
 
-    public Action feed() {
-        return new InstantAction(() -> {
-            feeder.setPosition(1.0); // подаём шарик
-        });
+    public void setPower(double power) {
+        shooterMotor.setPower(power);
     }
 
-    public Action resetFeeder() {
-        return new InstantAction(() -> {
-            feeder.setPosition(0.0); // возвращаем обратно
-        });
+    public void openGate() {
+        gateServo.setPosition(OPEN_POSITION);
+    }
+
+    public void closeGate() {
+        gateServo.setPosition(CLOSE_POSITION);
     }
 }

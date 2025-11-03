@@ -17,8 +17,8 @@ public class RBCCmeep {
         myBot.runAction(
                 myBot.getDrive().actionBuilder(new Pose2d(62, 14, Math.toRadians(-180)))
                         // первый выстрел
-                        .strafeToLinearHeading(new Vector2d(8, 16), Math.toRadians(-219))
-                        .strafeToLinearHeading(new Vector2d(8.1, 16), Math.toRadians(-219))
+                        .strafeToLinearHeading(new Vector2d(8, 16), Math.toRadians(148))
+                        .strafeToLinearHeading(new Vector2d(8.1, 16), Math.toRadians(148))
 
 
                         // движение к первым шарам
@@ -26,12 +26,10 @@ public class RBCCmeep {
                         .strafeToLinearHeading(new Vector2d(33, 35), Math.toRadians(90)) // выравнивание
                         .setTangent(Math.toRadians(-270))
                         .lineToYConstantHeading(55)
-                        .lineToYConstantHeading(37)
+                        .lineToYConstantHeading(16)
 
                         // возврат для второго выстрела
-                        .splineToSplineHeading(new Pose2d(8.0, 16, Math.toRadians(142)), Math.toRadians(180))
-                        .strafeToLinearHeading(new Vector2d(8.1, 16), Math.toRadians(142)) // выравнивание
-                        .strafeToLinearHeading(new Vector2d(8.2, 16), Math.toRadians(142))
+                        .strafeToLinearHeading(new Vector2d(8, 16), Math.toRadians(148)) // выравнивание
 
 
                         // выезд ко вторым шарам
@@ -40,11 +38,10 @@ public class RBCCmeep {
                         .strafeToLinearHeading(new Vector2d(44, 60), Math.toRadians(0)) // выравнивание
                         .setTangent(Math.toRadians(0))
                         .lineToXConstantHeading(59)
-                        .lineToXConstantHeading(45)
+                        .strafeToConstantHeading(new Vector2d(35, 30))
 
                         // финальный возврат на позицию
-                        .splineToSplineHeading(new Pose2d(8.0, 16, Math.toRadians(142)), Math.toRadians(170))
-                        .strafeToLinearHeading(new Vector2d(8.1, 16), Math.toRadians(142)) // финальное выравнивание
+                        .strafeToLinearHeading(new Vector2d(8, 16), Math.toRadians(148)) // финальное выравнивание
 
 
 

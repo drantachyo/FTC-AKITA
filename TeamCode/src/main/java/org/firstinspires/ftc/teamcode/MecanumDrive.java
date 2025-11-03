@@ -49,6 +49,7 @@ import org.firstinspires.ftc.teamcode.messages.PoseMessage;
 import java.lang.Math;
 import java.util.Arrays;
 import java.util.LinkedList;
+
 import java.util.List;
 
 @Config
@@ -64,13 +65,13 @@ public final class MecanumDrive {
 
         // drive model parameters
         public double inPerTick = 0.002949005708;
-        public double lateralInPerTick =  0.0025672301406224154;
-        public double trackWidthTicks = 4996.082076355015;
+        public double lateralInPerTick =  0.0024943932363433678;
+        public double trackWidthTicks = 5027.268437392435;
 
         // feedforward parameters (in tick units)
-        public double kS = 0.71947062469688169;
-        public double kV = 0.0005350342164730688;
-        public double kA = 0.00005;
+        public double kS = 0.804582096495559;
+        public double kV = 0.000533151721215908;
+        public double kA = 0;
 
         // path profile parameters (in inches)
         public double maxWheelVel = 60;
@@ -82,14 +83,14 @@ public final class MecanumDrive {
         public double maxAngAccel = Math.PI ;
 
         // path controller gains
-        public double axialGain = 5.5;
-        public double lateralGain = 1.6;
-        public double headingGain = 3.0; // shared with turn
+        public double axialGain = 4;
+        public double lateralGain = 0;
+        public double headingGain = 2; // shared with turn
 
-        public double axialVelGain = 1.5;
-        public double lateralVelGain = 0.5
+        public double axialVelGain = 0;
+        public double lateralVelGain = 1
                 ;
-        public double headingVelGain = 0.3; // shared with turn
+        public double headingVelGain = 0; // shared with turn
     }
 
     public static Params PARAMS = new Params();

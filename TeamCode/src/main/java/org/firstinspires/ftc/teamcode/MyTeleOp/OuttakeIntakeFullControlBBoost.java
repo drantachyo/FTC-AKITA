@@ -14,7 +14,7 @@ public class OuttakeIntakeFullControlBBoost extends OpMode {
 
     DcMotor Outtake;
     DcMotor Intake;
-    Servo gateServo;  // <-- добавляем серво
+    Servo gateServo;
     IMU imu;
 
     // --- Outtake ---
@@ -37,16 +37,16 @@ public class OuttakeIntakeFullControlBBoost extends OpMode {
     long bStartTime = 0;
 
     // --- Servo control ---
-    boolean servoOpen = false;       // состояние сервопривода
+    boolean servoOpen = false;
     boolean lastA = false;
-    final double openPosition = 0.8;  // открой
-    final double closePosition = 0.2; // закрой
+    final double openPosition = 1.0;   // открыть
+    final double closePosition = 0.65; // закрыть
 
     @Override
     public void init() {
         Outtake = hardwareMap.get(DcMotor.class, "Outtake");
         Intake = hardwareMap.get(DcMotor.class, "Intake");
-        gateServo = hardwareMap.get(Servo.class, "GateServo");// <-- имя из конфигурации
+        gateServo = hardwareMap.get(Servo.class, "GateServo");
 
         Outtake.setDirection(DcMotorSimple.Direction.REVERSE);
         Intake.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -69,7 +69,7 @@ public class OuttakeIntakeFullControlBBoost extends OpMode {
     @Override
     public void loop() {
         boolean currentX = gamepad2.x;
-        boolean currentA = gamepad2.a;   // теперь открывает/закрывает серво
+        boolean currentA = gamepad2.a;
         boolean currentLB = gamepad2.left_bumper;
         boolean currentRB = gamepad2.right_bumper;
         boolean currentY = gamepad2.y;
@@ -82,7 +82,7 @@ public class OuttakeIntakeFullControlBBoost extends OpMode {
         if (currentLB && !lastLB) startPower = Math.max(0.1, startPower - POWER_STEP);
         if (currentRB && !lastRB) startPower = Math.min(1.0, startPower + POWER_STEP);
 
-        // --- Toggle Servo (A) ---
+        // --- Toggle Servo manually (A) ---
         if (currentA && !lastA) {
             servoOpen = !servoOpen;
             gateServo.setPosition(servoOpen ? openPosition : closePosition);
@@ -95,6 +95,7 @@ public class OuttakeIntakeFullControlBBoost extends OpMode {
         if (currentB && !bActive) {
             bActive = true;
             bStartTime = System.currentTimeMillis();
+            gateServo.setPosition(closePosition);  // закрыть в начале импульса
         }
 
         double intakePower = 0.0;
@@ -108,23 +109,21 @@ public class OuttakeIntakeFullControlBBoost extends OpMode {
                 appliedOuttakePower = motorOn ? startPower : 0.0;
             } else if (elapsed < 800) {
                 intakePower = 0.0;
-                appliedOuttakePower = motorOn ? Math.min(startPower + 0.2 , 1.0) : 0.0;
+                appliedOuttakePower = motorOn ? Math.min(startPower + 0.2, 1.0) : 0.0;
             } else if (elapsed < 1300) {
                 intakePower = 1.0;
                 appliedOuttakePower = motorOn ? startPower : 0.0;
             } else {
                 bActive = false;
+                gateServo.setPosition(openPosition); // открыть по окончанию импульса
             }
         } else {
             if (gamepad2.dpad_up) intakePower = -1.0;
             else if (gamepad2.dpad_down) intakePower = 1.0;
             else intakePower = intakeOn ? 1.0 : 0.0;
 
-            if (motorOn) {
-                appliedOuttakePower = startPower;
-            } else {
-                appliedOuttakePower = 0.0;
-            }
+            if (motorOn) appliedOuttakePower = startPower;
+            else appliedOuttakePower = 0.0;
         }
 
         Outtake.setPower(appliedOuttakePower);

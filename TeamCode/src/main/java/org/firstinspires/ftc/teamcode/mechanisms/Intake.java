@@ -19,4 +19,8 @@ public class Intake {
     public Action stopIntake() {
         return new InstantAction(() -> intakeMotor.setPower(0));
     }
+
+    public void setPower(double v) {
+        intakeMotor.setPower(v);
+    }
 }

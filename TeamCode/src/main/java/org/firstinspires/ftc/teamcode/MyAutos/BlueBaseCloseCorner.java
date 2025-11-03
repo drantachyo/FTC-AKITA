@@ -6,6 +6,7 @@ import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.MecanumDrive;
 import org.firstinspires.ftc.teamcode.mechanisms.Shooter;
@@ -13,37 +14,101 @@ import org.firstinspires.ftc.teamcode.mechanisms.Intake;
 
 @Autonomous(name = "BlueBaseCloseCorner", group = "Auto")
 public class BlueBaseCloseCorner extends LinearOpMode {
+
     @Override
     public void runOpMode() throws InterruptedException {
-        Pose2d startPose = new Pose2d(62, -14, Math.toRadians(180));
+
+        // Синяя база
+        Pose2d startPose = new Pose2d(62, -14, Math.toRadians(-180));
         MecanumDrive drive = new MecanumDrive(hardwareMap, startPose);
         Shooter shooter = new Shooter(hardwareMap);
         Intake intake = new Intake(hardwareMap);
 
+        double shooterStartPower = 0.65; // как в TeleOp
+
         waitForStart();
 
+        // Включаем постоянную раскрутку шутера
+        shooter.setPower(shooterStartPower);
+
         Action path = drive.actionBuilder(startPose)
-                //выплюнуть шары загруженные
-                .strafeToLinearHeading(new Vector2d(-19, -16), Math.toRadians(229))
-                .stopAndAdd(shooter.runShooter())
-                .stopAndAdd(intake.runIntake())
-                .strafeToLinearHeading(new Vector2d(-19.1, -16), Math.toRadians(229))
-                .stopAndAdd(shooter.feed())
-
-                //подьехать к шарам 3
-                .strafeToLinearHeading(new Vector2d(35, -30), Math.toRadians(270))
-                .stopAndAdd(shooter.stopShooter())
-                .stopAndAdd(shooter.resetFeeder())
-                .setTangent(Math.toRadians(270))
-                .lineToYConstantHeading(-55)
-
-                //выплюнуть шары 3
-                .strafeToLinearHeading(new Vector2d(-19, -16), Math.toRadians(229))
-                .stopAndAdd(shooter.runShooter())
-                .strafeToLinearHeading(new Vector2d(-19.1, -16), Math.toRadians(229))
-                .stopAndAdd(shooter.feed())
+                // подъезд к обелиску для первого выстрела
+                .strafeToLinearHeading(new Vector2d(8, -16), Math.toRadians(-148))
+                .strafeToLinearHeading(new Vector2d(8.1, -16), Math.toRadians(-148))
                 .build();
 
         Actions.runBlocking(path);
+
+        // автоматический B-пульс перед обелиском
+        fireBpulse(intake, shooter, shooterStartPower);
+
+        // движение к первым шарам с включённым интейком
+        intake.setPower(1.0);
+        path = drive.actionBuilder(new Pose2d(8.1, -16, Math.toRadians(-148)))
+                .splineToSplineHeading(new Pose2d(33, -35, Math.toRadians(-90)), Math.toRadians(-90))
+                .strafeToLinearHeading(new Vector2d(33, -35), Math.toRadians(-90))
+                .setTangent(Math.toRadians(270))
+                .lineToYConstantHeading(-55)
+                .lineToYConstantHeading(-16)
+                .build();
+        Actions.runBlocking(path);
+        intake.setPower(0.0); // выключаем интейк после подъезда к шарам
+
+        // возврат к обелиску и второй B-пульс
+        path = drive.actionBuilder(new Pose2d(33, -16, Math.toRadians(-90)))
+                .strafeToLinearHeading(new Vector2d(8, -16), Math.toRadians(-148))
+                .build();
+        Actions.runBlocking(path);
+
+        fireBpulse(intake, shooter, shooterStartPower);
+
+        // выезд ко вторым шарам
+        intake.setPower(1.0);
+        path = drive.actionBuilder(new Pose2d(8, -16, Math.toRadians(-148)))
+                .lineToXLinearHeading(30, Math.toRadians(-90))
+                .splineToSplineHeading(new Pose2d(44, -60, Math.toRadians(0)), Math.toRadians(-90))
+                .strafeToLinearHeading(new Vector2d(44, -60), Math.toRadians(0))
+                .setTangent(Math.toRadians(0))
+                .lineToXConstantHeading(59)
+                .strafeToConstantHeading(new Vector2d(35, -30))
+                .build();
+        Actions.runBlocking(path);
+        intake.setPower(0.0);
+
+        // финальный подъезд к обелиску и выстрел
+        path = drive.actionBuilder(new Pose2d(35, -30, Math.toRadians(0)))
+                .strafeToLinearHeading(new Vector2d(8, -16), Math.toRadians(-148))
+                .build();
+        Actions.runBlocking(path);
+
+        fireBpulse(intake, shooter, shooterStartPower);
     }
+
+    private void fireBpulse(Intake intake, Shooter shooter, double startPower) throws InterruptedException {
+        // закрываем серво в начале импульса
+        shooter.closeGate();
+
+        // первый этап B-пульса
+        intake.setPower(1.0);
+        shooter.setPower(startPower);
+        sleep(150);
+
+        // второй этап
+        intake.setPower(0.0);
+        shooter.setPower(Math.min(startPower + 0.2, 1.0));
+        sleep(650);
+
+        // третий этап
+        intake.setPower(1.0);
+        shooter.setPower(startPower);
+        sleep(500);
+
+        // открываем серво в конце
+        shooter.openGate();
+
+        // выключаем интейк
+        intake.setPower(0.0);
+    }
+
+
 }

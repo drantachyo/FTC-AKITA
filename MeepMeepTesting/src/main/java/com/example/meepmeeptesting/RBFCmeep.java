@@ -10,22 +10,27 @@ public class RBFCmeep {
     public static void main(String[] args) {
         MeepMeep meepMeep = new MeepMeep(800);
 
+        // true = синяя база
+        boolean isBlue = true;
+        double side = isBlue ? -1 : 1;
+
         RoadRunnerBotEntity myBot = new DefaultBotBuilder(meepMeep)
                 .setConstraints(70, 55, Math.toRadians(450), Math.toRadians(450), 15)
                 .build();
 
         myBot.runAction(
-                myBot.getDrive().actionBuilder(new Pose2d(-50, 50, Math.toRadians(-234)))
-                        .strafeToLinearHeading(new Vector2d(-19, 16), Math.toRadians(-229))
-                        .strafeToLinearHeading(new Vector2d(-19.1, 16), Math.toRadians(-229))
-                        .strafeToLinearHeading(new Vector2d(-12, 27), Math.toRadians(-270))
-                        .lineToYConstantHeading(50)
-                        .strafeToLinearHeading(new Vector2d(-19, 16), Math.toRadians(-229))
-                        .strafeToLinearHeading(new Vector2d(-19.1, 16), Math.toRadians(-229))
-                        .strafeToLinearHeading(new Vector2d(12, 27), Math.toRadians(-270))
-                        .lineToYConstantHeading(50)
-                        .strafeToLinearHeading(new Vector2d(-19, 16), Math.toRadians(-229))
-                        .strafeToLinearHeading(new Vector2d(-19.1, 16), Math.toRadians(-229))
+                myBot.getDrive().actionBuilder(
+                                new Pose2d(-50, -50 * side, Math.toRadians(234) * side))
+                        .strafeToLinearHeading(new Vector2d(-19, -16 * side), Math.toRadians(229) * side)
+                        .strafeToLinearHeading(new Vector2d(-19.1, -16 * side), Math.toRadians(229) * side)
+                        .strafeToLinearHeading(new Vector2d(-9.5, -27 * side), Math.toRadians(271) * side)
+                        .strafeToLinearHeading(new Vector2d(-9.5, -50 * side), Math.toRadians(271) * side)
+                        .strafeToLinearHeading(new Vector2d(-19, -16 * side), Math.toRadians(229) * side)
+                        .strafeToLinearHeading(new Vector2d(-19.1, -16 * side), Math.toRadians(229) * side)
+                        .strafeToLinearHeading(new Vector2d(14, -27 * side), Math.toRadians(271) * side)
+                        .strafeToLinearHeading(new Vector2d(14, -50 * side), Math.toRadians(271) * side)
+                        .strafeToLinearHeading(new Vector2d(-19, -16 * side), Math.toRadians(229) * side)
+                        .strafeToLinearHeading(new Vector2d(-19.1, -16 * side), Math.toRadians(229) * side)
                         .build()
         );
 
