@@ -46,7 +46,7 @@ public class OuttakeIntakeFullControlBBoost extends OpMode {
     public void init() {
         Outtake = hardwareMap.get(DcMotor.class, "Outtake");
         Intake = hardwareMap.get(DcMotor.class, "Intake");
-        gateServo = hardwareMap.get(Servo.class, "GateServo"); // <-- имя из конфигурации
+        gateServo = hardwareMap.get(Servo.class, "GateServo");// <-- имя из конфигурации
 
         Outtake.setDirection(DcMotorSimple.Direction.REVERSE);
         Intake.setDirection(DcMotorSimple.Direction.REVERSE);
