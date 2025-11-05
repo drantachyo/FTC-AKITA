@@ -11,23 +11,31 @@ public class BBFCmeep {
         MeepMeep meepMeep = new MeepMeep(800);
 
         RoadRunnerBotEntity myBot = new DefaultBotBuilder(meepMeep)
-                .setConstraints(70, 55, Math.toRadians(450), Math.toRadians(450), 15)
+                .setConstraints(70, 55, Math.toRadians(360), Math.toRadians(360), 15)
                 .build();
 
         myBot.runAction(
                 myBot.getDrive().actionBuilder(new Pose2d(-50, -50, Math.toRadians(234)))
-                        .strafeToLinearHeading(new Vector2d(-19, -16), Math.toRadians(229))
-                        .strafeToLinearHeading(new Vector2d(-19.1, -16), Math.toRadians(229))
-                        .strafeToLinearHeading(new Vector2d(-9.5, -27), Math.toRadians(271))
-                        .strafeToLinearHeading(new Vector2d(-9.5, -50), Math.toRadians(271))
-                        .strafeToLinearHeading(new Vector2d(-19, -16), Math.toRadians(229))
-                        .strafeToLinearHeading(new Vector2d(-19.1, -16), Math.toRadians(229))
-                        .strafeToLinearHeading(new Vector2d(14, -27), Math.toRadians(271))
-                        .strafeToLinearHeading(new Vector2d(14, -50), Math.toRadians(271))
-                        .strafeToLinearHeading(new Vector2d(-19, -16), Math.toRadians(229))
-                        .strafeToLinearHeading(new Vector2d(-19.1, -16), Math.toRadians(229))
-                        .strafeToConstantHeading(new Vector2d(14,-14))
-                        .build()        );
+                        // Первый подъезд к обелиску
+                        .strafeToLinearHeading(new Vector2d(-19, -16), Math.toRadians(230))
+
+                        // Сбор первых шаров
+                        .strafeToLinearHeading(new Vector2d(-11.5, -16), Math.toRadians(270))
+                        .strafeToLinearHeading(new Vector2d(-11.5, -50), Math.toRadians(270))
+
+                        // Возврат к обелиску для второго выстрела
+                        .strafeToLinearHeading(new Vector2d(-19, -16), Math.toRadians(230))
+
+                        // Сбор вторых шаров
+                        .strafeToLinearHeading(new Vector2d(11.5, -16), Math.toRadians(270))
+                        .strafeToLinearHeading(new Vector2d(11.5, -50), Math.toRadians(270))
+                        //возврат к обелиску для третьего выстрела
+                        .strafeToLinearHeading(new Vector2d(-19, -16), Math.toRadians(230))
+
+                        // Финальная парковка
+                        .strafeToConstantHeading(new Vector2d(14, -14))
+                        .build()
+        );
 
         meepMeep.setBackground(MeepMeep.Background.FIELD_DECODE_OFFICIAL)
                 .setDarkMode(true)

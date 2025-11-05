@@ -10,27 +10,35 @@ public class RBFCmeep {
     public static void main(String[] args) {
         MeepMeep meepMeep = new MeepMeep(800);
 
-        // true = синяя база
-        boolean isBlue = true;
-        double side = isBlue ? -1 : 1;
+        boolean isRed = true;
+        double side = isRed ? -1 : 1; // красная база = -1
 
         RoadRunnerBotEntity myBot = new DefaultBotBuilder(meepMeep)
-                .setConstraints(70, 55, Math.toRadians(450), Math.toRadians(450), 15)
+                .setConstraints(70, 55, Math.toRadians(360), Math.toRadians(360), 15)
                 .build();
 
         myBot.runAction(
-                myBot.getDrive().actionBuilder(
-                                new Pose2d(-50, -50 * side, Math.toRadians(234) * side))
-                        .strafeToLinearHeading(new Vector2d(-19, -16 * side), Math.toRadians(229) * side)
-                        .strafeToLinearHeading(new Vector2d(-19.1, -16 * side), Math.toRadians(229) * side)
-                        .strafeToLinearHeading(new Vector2d(-9.5, -27 * side), Math.toRadians(271) * side)
-                        .strafeToLinearHeading(new Vector2d(-9.5, -50 * side), Math.toRadians(271) * side)
-                        .strafeToLinearHeading(new Vector2d(-19, -16 * side), Math.toRadians(229) * side)
-                        .strafeToLinearHeading(new Vector2d(-19.1, -16 * side), Math.toRadians(229) * side)
-                        .strafeToLinearHeading(new Vector2d(14, -27 * side), Math.toRadians(271) * side)
-                        .strafeToLinearHeading(new Vector2d(14, -50 * side), Math.toRadians(271) * side)
-                        .strafeToLinearHeading(new Vector2d(-19, -16 * side), Math.toRadians(229) * side)
-                        .strafeToLinearHeading(new Vector2d(-19.1, -16 * side), Math.toRadians(229) * side)
+                myBot.getDrive().actionBuilder(new Pose2d(-50, -50 * side, Math.toRadians(234 * side)))
+
+                        // Первый подъезд к обелиску
+                        .strafeToLinearHeading(new Vector2d(-19, -16 * side), Math.toRadians(230 * side))
+
+                        // Сбор первых шаров
+                        .strafeToLinearHeading(new Vector2d(-11.5, -16 * side), Math.toRadians(270 * side))
+                        .strafeToLinearHeading(new Vector2d(-11.5, -50 * side), Math.toRadians(270 * side))
+
+                        // Возврат к обелиску для второго выстрела
+                        .strafeToLinearHeading(new Vector2d(-19, -16 * side), Math.toRadians(230 * side))
+
+                        // Сбор вторых шаров
+                        .strafeToLinearHeading(new Vector2d(11.5, -16 * side), Math.toRadians(270 * side))
+                        .strafeToLinearHeading(new Vector2d(11.5, -50 * side), Math.toRadians(270 * side))
+
+                        // Возврат к обелиску для третьего выстрела
+                        .strafeToLinearHeading(new Vector2d(-19, -16 * side), Math.toRadians(230 * side))
+
+                        // Финальная парковка
+                        .strafeToConstantHeading(new Vector2d(14, -14 * side))
                         .build()
         );
 

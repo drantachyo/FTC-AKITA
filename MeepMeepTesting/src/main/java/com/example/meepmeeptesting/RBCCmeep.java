@@ -10,40 +10,43 @@ public class RBCCmeep {
     public static void main(String[] args) {
         MeepMeep meepMeep = new MeepMeep(800);
 
+        boolean isRed = true;
+        double side = isRed ? -1 : 1;
+
         RoadRunnerBotEntity myBot = new DefaultBotBuilder(meepMeep)
                 .setConstraints(70, 55, Math.toRadians(360), Math.toRadians(360), 15)
                 .build();
 
         myBot.runAction(
-                myBot.getDrive().actionBuilder(new Pose2d(62, 14, Math.toRadians(-180)))
-                        // первый выстрел
-                        .strafeToLinearHeading(new Vector2d(8, 16), Math.toRadians(148))
-                        .strafeToLinearHeading(new Vector2d(8.1, 16), Math.toRadians(148))
+                myBot.getDrive().actionBuilder(new Pose2d(61, -14 * side, Math.toRadians(-180) * side))
 
+                        // --- Первый подъезд к обелиску ---
+                        .strafeToLinearHeading(new Vector2d(-13, -16 * side), Math.toRadians(-135) * side)
+                        // B-пульс
 
-                        // движение к первым шарам
-                        .splineToSplineHeading(new Pose2d(33, 35, Math.toRadians(90)), Math.toRadians(90))
-                        .strafeToLinearHeading(new Vector2d(33, 35), Math.toRadians(90)) // выравнивание
-                        .setTangent(Math.toRadians(-270))
-                        .lineToYConstantHeading(55)
-                        .lineToYConstantHeading(16)
+                        // --- Забег к первым шарам ---
+                        .strafeToLinearHeading(new Vector2d(34.5, -15 * side), Math.toRadians(-90) * side)
+                        .setTangent(Math.toRadians(270) * side)
+                        .lineToYConstantHeading(-55 * side)
+                        .lineToYConstantHeading(-16 * side)
+                        // Интейк ON
 
-                        // возврат для второго выстрела
-                        .strafeToLinearHeading(new Vector2d(8, 16), Math.toRadians(148)) // выравнивание
+                        // --- Возврат к обелиску для второго выстрела ---
+                        .strafeToLinearHeading(new Vector2d(-13, -16 * side), Math.toRadians(-135) * side)
+                        // B-пульс
 
-
-                        // выезд ко вторым шарам
-                        .lineToXLinearHeading(30, Math.toRadians(90))
-                        .splineToSplineHeading(new Pose2d(44, 60, Math.toRadians(0)), Math.toRadians(90))
-                        .strafeToLinearHeading(new Vector2d(44, 60), Math.toRadians(0)) // выравнивание
+                        // --- Выезд ко вторым шарам ---
+                        .lineToXLinearHeading(30, Math.toRadians(-90) * side)
+                        .splineToSplineHeading(new Pose2d(44, -60 * side, Math.toRadians(0) * side), Math.toRadians(-90) * side)
+                        .strafeToLinearHeading(new Vector2d(44, -60 * side), Math.toRadians(0) * side)
                         .setTangent(Math.toRadians(0))
-                        .lineToXConstantHeading(59)
-                        .strafeToConstantHeading(new Vector2d(35, 30))
+                        .lineToXConstantHeading(60)
+                        // Интейк ON
 
-                        // финальный возврат на позицию
-                        .strafeToLinearHeading(new Vector2d(8, 16), Math.toRadians(148)) // финальное выравнивание
-
-
+                        // --- Финальный подъезд к обелиску ---
+                        .strafeToLinearHeading(new Vector2d(-13, -16 * side), Math.toRadians(-135) * side)
+                        // B-пульс
+                        .strafeToLinearHeading(new Vector2d(44, -16 * side), Math.toRadians(-180))
 
                         .build()
         );

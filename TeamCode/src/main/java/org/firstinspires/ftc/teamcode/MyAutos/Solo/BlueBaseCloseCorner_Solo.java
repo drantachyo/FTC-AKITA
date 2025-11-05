@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.MyAutos.Solo;
+package org.firstinspires.ftc.teamcode.MyAutos;
 
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
@@ -8,10 +8,10 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.MecanumDrive;
-import org.firstinspires.ftc.teamcode.mechanisms.Shooter;
 import org.firstinspires.ftc.teamcode.mechanisms.Intake;
+import org.firstinspires.ftc.teamcode.mechanisms.Shooter;
 
-@Autonomous(name = "BlueBaseCloseCorner_Final", group = "Auto")
+@Autonomous(name = "BlueBaseCloseCorner_Final_v2", group = "Auto")
 public class BlueBaseCloseCorner_Solo extends LinearOpMode {
 
     @Override
@@ -29,16 +29,16 @@ public class BlueBaseCloseCorner_Solo extends LinearOpMode {
 
         shooter.setPower(shooterStartPower);
 
-        // --- 1. Подъезд к обелиску для первого выстрела ---
+        // === 1. Первый выезд к обелиску ===
         Action toObelisk1 = drive.actionBuilder(startPose)
-                .strafeToLinearHeading(new Vector2d(8, -16), Math.toRadians(-147))
+                .strafeToLinearHeading(new Vector2d(-13, -16), Math.toRadians(-135))
                 .build();
         Actions.runBlocking(toObelisk1);
         fireBpulse(intake, shooter, shooterStartPower);
 
-        // --- 2. Подъезд к первым шарам ---
+        // === 2. Первый забег за шарами ===
         intake.setPower(1.0);
-        Action toBalls1 = drive.actionBuilder(new Pose2d(8, -16, Math.toRadians(-147)))
+        Action toBalls1 = drive.actionBuilder(new Pose2d(-13, -16, Math.toRadians(-135)))
                 .strafeToConstantHeading(new Vector2d(34.5, -16))
                 .strafeToLinearHeading(new Vector2d(34.5, -13), Math.toRadians(-90))
                 .setTangent(Math.toRadians(270))
@@ -48,17 +48,17 @@ public class BlueBaseCloseCorner_Solo extends LinearOpMode {
         Actions.runBlocking(toBalls1);
         intake.setPower(0.0);
 
-        // --- 3. Второй подъезд к обелиску ---
+        // === 3. Второй выезд к обелиску ===
         Action toObelisk2 = drive.actionBuilder(new Pose2d(34.5, -16, Math.toRadians(-90)))
-                .strafeToLinearHeading(new Vector2d(12, -16), Math.toRadians(-143))
+                .strafeToLinearHeading(new Vector2d(-13, -16), Math.toRadians(-135))
                 .build();
         Actions.runBlocking(toObelisk2);
         fireBpulse(intake, shooter, shooterStartPower);
 
-        // --- 4. Второй забег за шарами ---
+        // === 4. Второй забег за шарами ===
         intake.setPower(1.0);
-        Action toBalls2 = drive.actionBuilder(new Pose2d(12, -16, Math.toRadians(-143)))
-                .strafeToLinearHeading(new Vector2d(12, -13), Math.toRadians(-90))
+        Action toBalls2 = drive.actionBuilder(new Pose2d(-13, -16, Math.toRadians(-135)))
+                .strafeToLinearHeading(new Vector2d(11.6, -13), Math.toRadians(-90))
                 .setTangent(Math.toRadians(270))
                 .lineToYConstantHeading(-50)
                 .lineToYConstantHeading(-16)
@@ -66,14 +66,31 @@ public class BlueBaseCloseCorner_Solo extends LinearOpMode {
         Actions.runBlocking(toBalls2);
         intake.setPower(0.0);
 
-        // --- 5. Третий подъезд к обелиску ---
-        Action toObelisk3 = drive.actionBuilder(new Pose2d(-12, -16, Math.toRadians(-135)))
-                .strafeToLinearHeading(new Vector2d(-12, -13), Math.toRadians(-135))
+        // === 5. Третий выезд к обелиску ===
+        Action toObelisk3 = drive.actionBuilder(new Pose2d(11.6, -16, Math.toRadians(-90)))
+                .strafeToLinearHeading(new Vector2d(-13, -16), Math.toRadians(-135))
                 .build();
         Actions.runBlocking(toObelisk3);
         fireBpulse(intake, shooter, shooterStartPower);
 
-        // Можно добавить финальный паркинг, если нужно
+        // === 6. Третий забег за шарами ===
+        intake.setPower(1.0);
+        Action toBalls3 = drive.actionBuilder(new Pose2d(-13, -16, Math.toRadians(-135)))
+                .strafeToConstantHeading(new Vector2d(-12, -16))
+                .strafeToLinearHeading(new Vector2d(-12, -13), Math.toRadians(-90))
+                .lineToYConstantHeading(-50)
+                .lineToYConstantHeading(-16)
+                .build();
+        Actions.runBlocking(toBalls3);
+        intake.setPower(0.0);
+
+        // === 7. Четвёртый выезд к обелиску ===
+        Action toObelisk4 = drive.actionBuilder(new Pose2d(-12, -16, Math.toRadians(-90)))
+                .strafeToLinearHeading(new Vector2d(-12, -13), Math.toRadians(-135))
+                .strafeToConstantHeading(new Vector2d(10, -16))
+                .build();
+        Actions.runBlocking(toObelisk4);
+        fireBpulse(intake, shooter, shooterStartPower);
     }
 
     private void fireBpulse(Intake intake, Shooter shooter, double startPower) throws InterruptedException {

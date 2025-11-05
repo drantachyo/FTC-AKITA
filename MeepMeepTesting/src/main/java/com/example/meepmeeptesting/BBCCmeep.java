@@ -10,8 +10,7 @@ public class BBCCmeep {
     public static void main(String[] args) {
         MeepMeep meepMeep = new MeepMeep(800);
 
-        // true = синяя база
-        boolean isBlue = true;
+        boolean isBlue = false;
         double side = isBlue ? -1 : 1;
 
         RoadRunnerBotEntity myBot = new DefaultBotBuilder(meepMeep)
@@ -19,41 +18,33 @@ public class BBCCmeep {
                 .build();
 
         myBot.runAction(
-                        myBot.getDrive().actionBuilder(new Pose2d(62, 14 * side, Math.toRadians(-180) * side))
-                        // Первый выезд к обелиску
-                        .strafeToLinearHeading(new Vector2d(8, -16), Math.toRadians(-147))
+                myBot.getDrive().actionBuilder(new Pose2d(61, -14 * side, Math.toRadians(-180) * side))
+                        // --- Первый подъезд к обелиску ---
+                        .strafeToLinearHeading(new Vector2d(-13, -16 * side), Math.toRadians(-135) * side)
 
-                        // Первый забег за шарами
-                        .strafeToConstantHeading(new Vector2d(34.5, -16))
-                        .strafeToLinearHeading(new Vector2d(34.5, -13), Math.toRadians(-90))
-                        .setTangent(Math.toRadians(270))
-                        .lineToYConstantHeading(-50)
-                        .lineToYConstantHeading(-16)
+                        // --- Подъезд к первым шарам ---
+                        .strafeToLinearHeading(new Vector2d(34.5, -15 * side), Math.toRadians(-90) * side)
+                        .setTangent(Math.toRadians(270) * side)
+                        .lineToYConstantHeading(-55 * side)
+                        .lineToYConstantHeading(-16 * side)
 
-                        // Второй выезд к обелиску
-                        .strafeToLinearHeading(new Vector2d(12, -16), Math.toRadians(-143))
+                        // --- Возврат к обелиску ---
+                        .strafeToLinearHeading(new Vector2d(-13, -16 * side), Math.toRadians(-135) * side)
 
-                                // Второй выезд за шарами
-                                .strafeToLinearHeading(new Vector2d(12, -13), Math.toRadians(-90))
-                                .setTangent(Math.toRadians(270))
-                                .lineToYConstantHeading(-50)
-                                .lineToYConstantHeading(-16)
-
-                                //трейти выезд к обелиску
-                                .strafeToLinearHeading(new Vector2d(8, -16), Math.toRadians(-135))
-
-                                //третий выезд за шарами
-                                .strafeToConstantHeading(new Vector2d(-12, -16))
-                                .strafeToLinearHeading(new Vector2d(-12, -13), Math.toRadians(-90))
-                                .lineToYConstantHeading(-50)
-                                .lineToYConstantHeading(-16)
-                                // четвертый везд к обелиску
-                                .strafeToLinearHeading(new Vector2d(-12, -13), Math.toRadians(-135))
-                                .strafeToConstantHeading(new Vector2d(10, -16))
-                        .build());
+                        // --- Выезд ко вторым шарам ---
+                        .lineToXLinearHeading(30, Math.toRadians(-90) * side)
+                        .splineToSplineHeading(new Pose2d(44, -60 * side, Math.toRadians(0) * side), Math.toRadians(-90) * side)
+                        .strafeToLinearHeading(new Vector2d(44, -60 * side), Math.toRadians(0) * side)
+                        .setTangent(Math.toRadians(0))
+                        .lineToXConstantHeading(60)
 
 
+                        // --- Финальный подъезд к обелиску ---
+                        .strafeToLinearHeading(new Vector2d(-13, -16 * side), Math.toRadians(-135) * side)
+                        .strafeToLinearHeading(new Vector2d(44, -16 * side), Math.toRadians(-180))
 
+                        .build()
+        );
 
         meepMeep.setBackground(MeepMeep.Background.FIELD_DECODE_OFFICIAL)
                 .setDarkMode(true)
