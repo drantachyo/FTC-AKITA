@@ -32,22 +32,24 @@ public class BBCCmeep {
 
                         // Второй выезд к обелиску
                         .strafeToLinearHeading(new Vector2d(12, -16), Math.toRadians(-143))
+
+                                // Второй выезд за шарами
                                 .strafeToLinearHeading(new Vector2d(12, -13), Math.toRadians(-90))
                                 .setTangent(Math.toRadians(270))
                                 .lineToYConstantHeading(-50)
                                 .lineToYConstantHeading(-16)
-                                .strafeToLinearHeading(new Vector2d(8, -16), Math.toRadians(-147))
+
+                                //трейти выезд к обелиску
+                                .strafeToLinearHeading(new Vector2d(8, -16), Math.toRadians(-135))
+
+                                //третий выезд за шарами
                                 .strafeToConstantHeading(new Vector2d(-12, -16))
                                 .strafeToLinearHeading(new Vector2d(-12, -13), Math.toRadians(-90))
                                 .lineToYConstantHeading(-50)
                                 .lineToYConstantHeading(-16)
-                                .strafeToLinearHeading(new Vector2d(-12, -13), Math.toRadians(-130))
-
-
-                                // Второй забег за шарами
-
-
-
+                                // четвертый везд к обелиску
+                                .strafeToLinearHeading(new Vector2d(-12, -13), Math.toRadians(-135))
+                                .strafeToConstantHeading(new Vector2d(10, -16))
                         .build());
 
 
