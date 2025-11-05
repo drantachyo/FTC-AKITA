@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.mechanisms;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.acmerobotics.roadrunner.InstantAction;
@@ -15,6 +16,7 @@ public class Shooter {
 
     public Shooter(HardwareMap hardwareMap) {
         shooterMotor = hardwareMap.get(DcMotor.class, "Outtake");
+        shooterMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         gateServo = hardwareMap.get(Servo.class, "GateServo");
     }
 

@@ -20,33 +20,38 @@ public class BBCCmeep {
 
         myBot.runAction(
                         myBot.getDrive().actionBuilder(new Pose2d(62, 14 * side, Math.toRadians(-180) * side))
-                                .strafeToLinearHeading(new Vector2d(8, -16), Math.toRadians(-148))
-                                .strafeToLinearHeading(new Vector2d(8.1, -16), Math.toRadians(-148))
+                        // Первый выезд к обелиску
+                        .strafeToLinearHeading(new Vector2d(8, -16), Math.toRadians(-147))
 
-// движение к первым шарам
-                                .splineToSplineHeading(new Pose2d(33, -35, Math.toRadians(-90)), Math.toRadians(-90))
-                                .strafeToLinearHeading(new Vector2d(33, -35), Math.toRadians(-90)) // выравнивание
+                        // Первый забег за шарами
+                        .strafeToConstantHeading(new Vector2d(34.5, -16))
+                        .strafeToLinearHeading(new Vector2d(34.5, -13), Math.toRadians(-90))
+                        .setTangent(Math.toRadians(270))
+                        .lineToYConstantHeading(-50)
+                        .lineToYConstantHeading(-16)
+
+                        // Второй выезд к обелиску
+                        .strafeToLinearHeading(new Vector2d(12, -16), Math.toRadians(-143))
+                                .strafeToLinearHeading(new Vector2d(12, -13), Math.toRadians(-90))
                                 .setTangent(Math.toRadians(270))
-                                .lineToYConstantHeading(-55)
+                                .lineToYConstantHeading(-50)
                                 .lineToYConstantHeading(-16)
+                                .strafeToLinearHeading(new Vector2d(8, -16), Math.toRadians(-147))
+                                .strafeToConstantHeading(new Vector2d(-12, -16))
+                                .strafeToLinearHeading(new Vector2d(-12, -13), Math.toRadians(-90))
+                                .lineToYConstantHeading(-50)
+                                .lineToYConstantHeading(-16)
+                                .strafeToLinearHeading(new Vector2d(-12, -13), Math.toRadians(-130))
 
-// возврат для второго выстрела
-                                .strafeToLinearHeading(new Vector2d(8, -16), Math.toRadians(-148)) // выравнивание
 
-// выезд ко вторым шарам
-                                .lineToXLinearHeading(30, Math.toRadians(-90))
-                                .splineToSplineHeading(new Pose2d(44, -60, Math.toRadians(0)), Math.toRadians(-90))
-                                .strafeToLinearHeading(new Vector2d(44, -60), Math.toRadians(0)) // выравнивание
-                                .setTangent(Math.toRadians(0))
-                                .lineToXConstantHeading(59)
-                                .strafeToConstantHeading(new Vector2d(35, -30))
+                                // Второй забег за шарами
 
-// финальный возврат на позицию
-                                .strafeToLinearHeading(new Vector2d(8, -16), Math.toRadians(-148)) // финальное выравнивание
 
-                                .build()
 
-        );
+                        .build());
+
+
+
 
         meepMeep.setBackground(MeepMeep.Background.FIELD_DECODE_OFFICIAL)
                 .setDarkMode(true)

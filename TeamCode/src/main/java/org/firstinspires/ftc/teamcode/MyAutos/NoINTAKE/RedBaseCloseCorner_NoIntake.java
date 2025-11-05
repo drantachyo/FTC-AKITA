@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.MyAutos;
+package org.firstinspires.ftc.teamcode.MyAutos.NoINTAKE;
 
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
@@ -9,10 +9,9 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.MecanumDrive;
 import org.firstinspires.ftc.teamcode.mechanisms.Shooter;
-import org.firstinspires.ftc.teamcode.mechanisms.Intake;
 
-@Autonomous(name = "RedBaseCloseCorner", group = "Auto")
-public class RedBaseCloseCorner extends LinearOpMode {
+@Autonomous(name = "RedBaseCloseCorner_NoIntake", group = "Auto")
+public class RedBaseCloseCorner_NoIntake extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -21,9 +20,8 @@ public class RedBaseCloseCorner extends LinearOpMode {
 
         MecanumDrive drive = new MecanumDrive(hardwareMap, startPose);
         Shooter shooter = new Shooter(hardwareMap);
-        Intake intake = new Intake(hardwareMap);
 
-        double shooterStartPower = 0.65;
+        double shooterStartPower = 0.58;
 
         waitForStart();
 
@@ -36,10 +34,9 @@ public class RedBaseCloseCorner extends LinearOpMode {
                 .strafeToLinearHeading(new Vector2d(8.1, 16), Math.toRadians(148))
                 .build();
         Actions.runBlocking(path);
-        fireBpulse(intake, shooter, shooterStartPower);
+        fireBpulse(shooter, shooterStartPower);
 
-        // движение к первым шарам с включённым интейком
-        intake.setPower(1.0);
+        // движение к первым шарам (без интейка)
         path = drive.actionBuilder(new Pose2d(8.1, 16, Math.toRadians(148)))
                 .splineToSplineHeading(new Pose2d(33, 35, Math.toRadians(90)), Math.toRadians(90))
                 .strafeToLinearHeading(new Vector2d(33, 35), Math.toRadians(90))
@@ -48,17 +45,15 @@ public class RedBaseCloseCorner extends LinearOpMode {
                 .lineToYConstantHeading(16)
                 .build();
         Actions.runBlocking(path);
-        intake.setPower(0.0);
 
         // возврат к обелиску и второй B-пульс
         path = drive.actionBuilder(new Pose2d(33, 16, Math.toRadians(90)))
                 .strafeToLinearHeading(new Vector2d(8, 16), Math.toRadians(148))
                 .build();
         Actions.runBlocking(path);
-        fireBpulse(intake, shooter, shooterStartPower);
+        fireBpulse(shooter, shooterStartPower);
 
-        // выезд ко вторым шарам с интейком
-        intake.setPower(1.0);
+        // выезд ко вторым шарам (без интейка)
         path = drive.actionBuilder(new Pose2d(8, 16, Math.toRadians(148)))
                 .lineToXLinearHeading(30, Math.toRadians(90))
                 .splineToSplineHeading(new Pose2d(44, 60, Math.toRadians(0)), Math.toRadians(90))
@@ -68,32 +63,28 @@ public class RedBaseCloseCorner extends LinearOpMode {
                 .strafeToConstantHeading(new Vector2d(35, 30))
                 .build();
         Actions.runBlocking(path);
-        intake.setPower(0.0);
 
         // финальный подъезд к обелиску и выстрел
         path = drive.actionBuilder(new Pose2d(35, 30, Math.toRadians(0)))
                 .strafeToLinearHeading(new Vector2d(8, 16), Math.toRadians(148))
                 .build();
         Actions.runBlocking(path);
-        fireBpulse(intake, shooter, shooterStartPower);
+        fireBpulse(shooter, shooterStartPower);
     }
 
-    private void fireBpulse(Intake intake, Shooter shooter, double startPower) throws InterruptedException {
+    private void fireBpulse(Shooter shooter, double startPower) throws InterruptedException {
+        sleep(3000);
         shooter.closeGate();
 
-        intake.setPower(1.0);
         shooter.setPower(startPower);
         sleep(150);
 
-        intake.setPower(0.0);
         shooter.setPower(Math.min(startPower + 0.2, 1.0));
         sleep(650);
 
-        intake.setPower(1.0);
         shooter.setPower(startPower);
         sleep(500);
 
         shooter.openGate();
-        intake.setPower(0.0);
     }
 }

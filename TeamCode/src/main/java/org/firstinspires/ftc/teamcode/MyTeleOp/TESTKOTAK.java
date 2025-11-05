@@ -41,8 +41,8 @@ public class TESTKOTAK extends OpMode {
 
 
         frontLeftDrive = hardwareMap.get(DcMotor.class, "leftFront");
-        frontRightDrive = hardwareMap.get(DcMotor.class, "leftBack");
-        backLeftDrive = hardwareMap.get(DcMotor.class, "rightFront");
+        frontRightDrive = hardwareMap.get(DcMotor.class, "rightFront");
+        backLeftDrive = hardwareMap.get(DcMotor.class, "leftBack");
         backRightDrive = hardwareMap.get(DcMotor.class, "rightBack");
 
         backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
