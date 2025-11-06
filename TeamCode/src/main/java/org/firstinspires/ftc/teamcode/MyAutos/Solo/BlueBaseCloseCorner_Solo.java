@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.MyAutos;
+package org.firstinspires.ftc.teamcode.MyAutos.Solo;
 
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
@@ -11,7 +11,7 @@ import org.firstinspires.ftc.teamcode.MecanumDrive;
 import org.firstinspires.ftc.teamcode.mechanisms.Intake;
 import org.firstinspires.ftc.teamcode.mechanisms.Shooter;
 
-@Autonomous(name = "BlueBaseCloseCorner_Final_v2", group = "Auto")
+@Autonomous(name = "BBCCS", group = "Auto")
 public class BlueBaseCloseCorner_Solo extends LinearOpMode {
 
     @Override
@@ -87,7 +87,6 @@ public class BlueBaseCloseCorner_Solo extends LinearOpMode {
         // === 7. Четвёртый выезд к обелиску ===
         Action toObelisk4 = drive.actionBuilder(new Pose2d(-12, -16, Math.toRadians(-90)))
                 .strafeToLinearHeading(new Vector2d(-12, -13), Math.toRadians(-135))
-                .strafeToConstantHeading(new Vector2d(10, -16))
                 .build();
         Actions.runBlocking(toObelisk4);
         fireBpulse(intake, shooter, shooterStartPower);

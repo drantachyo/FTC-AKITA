@@ -11,7 +11,7 @@ import org.firstinspires.ftc.teamcode.MecanumDrive;
 import org.firstinspires.ftc.teamcode.mechanisms.Shooter;
 import org.firstinspires.ftc.teamcode.mechanisms.Intake;
 
-@Autonomous(name = "BlueBaseCloseCorner_Final", group = "Auto")
+@Autonomous(name = "RBCCF", group = "Auto")
 public class RedBaseCloseCorner_Final extends LinearOpMode {
 
     @Override
@@ -79,14 +79,37 @@ public class RedBaseCloseCorner_Final extends LinearOpMode {
     }
 
     private void fireBpulse(Intake intake, Shooter shooter, double startPower) throws InterruptedException {
-        shooter.closeGate();
-        intake.setPower(1.0);
-        shooter.setPower(startPower);
-        sleep(150);
-        intake.setPower(0.0);
-        shooter.setPower(Math.min(startPower + 0.2, 1.0));
-        sleep(650);
-        shooter.setPower(startPower);
+        final double BOOST = Math.min(startPower + 0.2, 1.0);
+
+        // 1) открыть гейт
         shooter.openGate();
+
+        // 2) подать первый мяч
+        intake.setPower(1.0);
+        sleep(250); // можно подстроить по скорости подачи
+        intake.setPower(0.0);
+
+        // 3) закрыть гейт
+        shooter.closeGate();
+        sleep(150);
+
+        // 4) буст мощности
+        shooter.setPower(BOOST);
+        sleep(300);
+
+        // 5) открыть гейт (выстрел)
+        shooter.openGate();
+        sleep(200);
+
+        // 6) подать второй мяч
+        intake.setPower(1.0);
+        sleep(400);
+        intake.setPower(0.0);
+
+        // 7) вернуть всё
+        shooter.setPower(startPower);
+        shooter.closeGate();
     }
+
+
 }

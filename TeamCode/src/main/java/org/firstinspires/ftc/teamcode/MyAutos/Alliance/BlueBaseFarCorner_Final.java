@@ -11,7 +11,7 @@ import org.firstinspires.ftc.teamcode.MecanumDrive;
 import org.firstinspires.ftc.teamcode.mechanisms.Shooter;
 import org.firstinspires.ftc.teamcode.mechanisms.Intake;
 
-@Autonomous(name = "BlueBaseFarCorner_Full", group = "Auto")
+@Autonomous(name = "BBFCF", group = "Auto")
 public class BlueBaseFarCorner_Final extends LinearOpMode {
 
     @Override
@@ -54,14 +54,14 @@ public class BlueBaseFarCorner_Final extends LinearOpMode {
         // --- Второй сбор шаров ---
         intake.setPower(1.0);
         path = drive.actionBuilder(new Pose2d(-19, -16, Math.toRadians(230)))
-                .strafeToLinearHeading(new Vector2d(11.5, -16), Math.toRadians(270))
-                .strafeToLinearHeading(new Vector2d(11.5, -50), Math.toRadians(270))
+                .strafeToLinearHeading(new Vector2d(12, -16), Math.toRadians(270))
+                .strafeToLinearHeading(new Vector2d(12, -50), Math.toRadians(270))
                 .build();
         Actions.runBlocking(path);
         intake.setPower(0.0);
 
         // --- Третий подъезд к обелиску ---
-        path = drive.actionBuilder(new Pose2d(11.5, -50, Math.toRadians(270)))
+        path = drive.actionBuilder(new Pose2d(12, -50, Math.toRadians(270)))
                 .strafeToLinearHeading(new Vector2d(-19, -16), Math.toRadians(230))
                 .build();
         Actions.runBlocking(path);
@@ -75,13 +75,36 @@ public class BlueBaseFarCorner_Final extends LinearOpMode {
     }
 
     private void fireBpulse(Intake intake, Shooter shooter, double startPower) throws InterruptedException {
-        shooter.closeGate();
-        intake.setPower(0.0); // остановка интейка на выстрел
-        shooter.setPower(startPower);
-        sleep(150);
-        shooter.setPower(Math.min(startPower + 0.2, 1.0));
-        sleep(650);
-        shooter.setPower(startPower);
+        final double BOOST = Math.min(startPower + 0.2, 1.0);
+
+        // 1) открыть гейт
         shooter.openGate();
+
+        // 2) подать первый мяч
+        intake.setPower(1.0);
+        sleep(250); // можно подстроить по скорости подачи
+        intake.setPower(0.0);
+
+        // 3) закрыть гейт
+        shooter.closeGate();
+        sleep(150);
+
+        // 4) буст мощности
+        shooter.setPower(BOOST);
+        sleep(300);
+
+        // 5) открыть гейт (выстрел)
+        shooter.openGate();
+        sleep(200);
+
+        // 6) подать второй мяч
+        intake.setPower(1.0);
+        sleep(400);
+        intake.setPower(0.0);
+
+        // 7) вернуть всё
+        shooter.setPower(startPower);
+        shooter.closeGate();
     }
+
 }

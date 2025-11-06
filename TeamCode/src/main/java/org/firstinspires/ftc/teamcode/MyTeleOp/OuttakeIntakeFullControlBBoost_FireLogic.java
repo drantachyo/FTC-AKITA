@@ -7,10 +7,9 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.IMU;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
-@TeleOp(name = "OuttakeIntakeFullControlBBoost_Servo", group = "TeleOp")
-public class OuttakeIntakeFullControlBBoost extends OpMode {
+@TeleOp(name = "OuttakeIntakeFullControlBBoost_FireLogic", group = "TeleOp")
+public class OuttakeIntakeFullControlBBoost_FireLogic extends OpMode {
 
     DcMotor Outtake;
     DcMotor Intake;
@@ -24,23 +23,21 @@ public class OuttakeIntakeFullControlBBoost extends OpMode {
     boolean lastRB = false;
 
     double startPower = 0.55;
-    double rampPower = 0.0;
-    final double MAX_RAMP_POWER = 0.8;
     final double POWER_STEP = 0.05;
 
     // --- Intake ---
     boolean intakeOn = false;
     boolean lastIntakeY = false;
 
-    // --- B pulse control ---
+    // --- B pulse ---
     boolean bActive = false;
     long bStartTime = 0;
 
-    // --- Servo control ---
+    // --- Servo ---
     boolean servoOpen = false;
     boolean lastA = false;
-    final double openPosition = 1.0;   // открыть
-    final double closePosition = 0.65; // закрыть
+    final double openPosition = 0.65;   // открыть
+    final double closePosition = 1.0;   // закрыть
 
     @Override
     public void init() {
@@ -50,19 +47,15 @@ public class OuttakeIntakeFullControlBBoost extends OpMode {
 
         Outtake.setDirection(DcMotorSimple.Direction.REVERSE);
         Intake.setDirection(DcMotorSimple.Direction.REVERSE);
-        rampPower = startPower;
 
         imu = hardwareMap.get(IMU.class, "imu");
-        RevHubOrientationOnRobot.LogoFacingDirection logoDirection =
-                RevHubOrientationOnRobot.LogoFacingDirection.RIGHT;
-        RevHubOrientationOnRobot.UsbFacingDirection usbDirection =
-                RevHubOrientationOnRobot.UsbFacingDirection.UP;
-        imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(logoDirection, usbDirection)));
+        imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(
+                RevHubOrientationOnRobot.LogoFacingDirection.RIGHT,
+                RevHubOrientationOnRobot.UsbFacingDirection.UP)));
 
-        // серво по умолчанию закрыто
         gateServo.setPosition(closePosition);
 
-        telemetry.addLine("Initialized Outtake + Intake + Servo");
+        telemetry.addLine("Initialized Outtake + Intake + Gate Servo");
         telemetry.update();
     }
 
@@ -91,60 +84,74 @@ public class OuttakeIntakeFullControlBBoost extends OpMode {
         // --- Toggle Intake (Y) ---
         if (currentY && !lastIntakeY) intakeOn = !intakeOn;
 
-        // --- B pulse intake ---
+        // --- Start B pulse (fire sequence) ---
         if (currentB && !bActive) {
             bActive = true;
             bStartTime = System.currentTimeMillis();
-            gateServo.setPosition(closePosition);  // закрыть в начале импульса
         }
 
         double intakePower = 0.0;
-        double appliedOuttakePower = 0.0;
+        double outtakePower = motorOn ? startPower : 0.0;
 
-        // --- B pulse logic ---
+        // --- B-pulse timed logic (same as fireBpulse) ---
         if (bActive) {
             long elapsed = System.currentTimeMillis() - bStartTime;
+            double BOOST = Math.min(startPower + 0.2, 1.0);
+
             if (elapsed < 150) {
+                // (1) открыть гейт, (2) подать коротко
+                gateServo.setPosition(openPosition);
                 intakePower = 1.0;
-                appliedOuttakePower = motorOn ? startPower : 0.0;
-            } else if (elapsed < 800) {
+            } else if (elapsed < 300) {
+                // закончить короткую подачу
                 intakePower = 0.0;
-                appliedOuttakePower = motorOn ? Math.min(startPower + 0.2, 1.0) : 0.0;
-            } else if (elapsed < 1300) {
+            } else if (elapsed < 500) {
+                // (3) закрыть гейт
+                gateServo.setPosition(closePosition);
+            } else if (elapsed < 700) {
+                // (4) поднять мощность
+                outtakePower = BOOST;
+            } else if (elapsed < 900) {
+                // (5) открыть гейт — выстрел
+                gateServo.setPosition(openPosition);
+            } else if (elapsed < 1250) {
+                // (6) подать второй мяч
                 intakePower = 1.0;
-                appliedOuttakePower = motorOn ? startPower : 0.0;
+            } else if (elapsed < 1400) {
+                intakePower = 0.0;
             } else {
+                // (7) вернуть всё
                 bActive = false;
-                gateServo.setPosition(openPosition); // открыть по окончанию импульса
+                gateServo.setPosition(closePosition);
+                outtakePower = startPower;
             }
         } else {
+            // --- Обычное управление ---
             if (gamepad2.dpad_up) intakePower = -1.0;
             else if (gamepad2.dpad_down) intakePower = 1.0;
             else intakePower = intakeOn ? 1.0 : 0.0;
 
-            if (motorOn) appliedOuttakePower = startPower;
-            else appliedOuttakePower = 0.0;
+            if (!motorOn) outtakePower = 0.0;
         }
 
-        Outtake.setPower(appliedOuttakePower);
+        // --- Применение мощности ---
+        Outtake.setPower(outtakePower);
         Intake.setPower(intakePower);
 
-        // --- Save last states ---
+        // --- Обновление состояний ---
         lastX = currentX;
         lastA = currentA;
         lastLB = currentLB;
         lastRB = currentRB;
         lastIntakeY = currentY;
 
-        // --- Telemetry ---
+        // --- Телеметрия ---
         telemetry.addData("Outtake On", motorOn);
         telemetry.addData("Start Power", startPower);
-        telemetry.addData("Applied Outtake Power", appliedOuttakePower);
-        telemetry.addData("Intake On", intakeOn);
+        telemetry.addData("Outtake Power", outtakePower);
         telemetry.addData("Intake Power", intakePower);
         telemetry.addData("B Pulse Active", bActive);
-        telemetry.addData("Servo Open", servoOpen);
-        telemetry.addData("Servo Position", gateServo.getPosition());
+        telemetry.addData("Servo Pos", gateServo.getPosition());
         telemetry.update();
     }
 }

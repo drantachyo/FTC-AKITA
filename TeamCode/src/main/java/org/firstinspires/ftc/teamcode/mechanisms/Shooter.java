@@ -11,8 +11,8 @@ public class Shooter {
     private DcMotor shooterMotor;
     private Servo gateServo;
 
-    private final double OPEN_POSITION = 1.0;
-    private final double CLOSE_POSITION = 0.65;
+    private final double OPEN_POSITION = 0.65;
+    private final double CLOSE_POSITION = 1.0;
 
     public Shooter(HardwareMap hardwareMap) {
         shooterMotor = hardwareMap.get(DcMotor.class, "Outtake");

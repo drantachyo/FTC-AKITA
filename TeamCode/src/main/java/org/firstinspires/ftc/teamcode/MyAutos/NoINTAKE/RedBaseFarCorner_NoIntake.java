@@ -10,7 +10,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.teamcode.MecanumDrive;
 import org.firstinspires.ftc.teamcode.mechanisms.Shooter;
 
-@Autonomous(name = "RedBaseFarCorner_NoIntake", group = "Auto")
+@Autonomous(name = "RBFCN", group = "Auto")
 public class RedBaseFarCorner_NoIntake extends LinearOpMode {
 
     @Override

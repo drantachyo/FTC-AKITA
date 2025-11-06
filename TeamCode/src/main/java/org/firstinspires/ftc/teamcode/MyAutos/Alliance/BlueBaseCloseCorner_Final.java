@@ -11,7 +11,7 @@ import org.firstinspires.ftc.teamcode.MecanumDrive;
 import org.firstinspires.ftc.teamcode.mechanisms.Shooter;
 import org.firstinspires.ftc.teamcode.mechanisms.Intake;
 
-@Autonomous(name = "BlueBaseCloseCorner_Final", group = "Auto")
+@Autonomous(name = "BBCCF_FINAL", group = "Auto")
 public class BlueBaseCloseCorner_Final extends LinearOpMode {
 
     @Override
@@ -59,11 +59,10 @@ public class BlueBaseCloseCorner_Final extends LinearOpMode {
 
         // --- Выезд ко вторым шарам ---
         path = drive.actionBuilder(new Pose2d(-13, -16 * side, Math.toRadians(-135) * side))
-                .lineToXLinearHeading(30, Math.toRadians(-90) * side)
-                .splineToSplineHeading(new Pose2d(44, -60 * side, Math.toRadians(0) * side), Math.toRadians(-90) * side)
+                .strafeToLinearHeading(new Vector2d(30, -16 * side), Math.toRadians(-90) * side)
                 .strafeToLinearHeading(new Vector2d(44, -60 * side), Math.toRadians(0) * side)
                 .setTangent(Math.toRadians(0))
-                .lineToXConstantHeading(60)
+                .lineToXConstantHeading(60 * side)
                 .build();
         intake.setPower(1.0);
         Actions.runBlocking(path);
@@ -72,21 +71,48 @@ public class BlueBaseCloseCorner_Final extends LinearOpMode {
         // --- Финальный подъезд к обелиску ---
         path = drive.actionBuilder(new Pose2d(60, -60 * side, Math.toRadians(0) * side))
                 .strafeToLinearHeading(new Vector2d(-13, -16 * side), Math.toRadians(-135) * side)
-                .strafeToLinearHeading(new Vector2d(44, -16 * side), Math.toRadians(-180))
                 .build();
         Actions.runBlocking(path);
         fireBpulse(intake, shooter, shooterStartPower);
+
+        // --- Финальная парковка ---
+        path = drive.actionBuilder(new Pose2d(-13, -16 * side, Math.toRadians(-135) * side))
+                .strafeToConstantHeading(new Vector2d(30, -16))
+                .build();
+        Actions.runBlocking(path);
     }
 
     private void fireBpulse(Intake intake, Shooter shooter, double startPower) throws InterruptedException {
-        shooter.closeGate();
-        intake.setPower(1.0);
-        shooter.setPower(startPower);
-        sleep(150);
-        intake.setPower(0.0);
-        shooter.setPower(Math.min(startPower + 0.2, 1.0));
-        sleep(650);
-        shooter.setPower(startPower);
+        final double BOOST = Math.min(startPower + 0.2, 1.0);
+
+        // 1) открыть гейт
         shooter.openGate();
+
+        // 2) подать первый мяч
+        intake.setPower(1.0);
+        sleep(250); // можно подстроить по скорости подачи
+        intake.setPower(0.0);
+
+        // 3) закрыть гейт
+        shooter.closeGate();
+        sleep(150);
+
+        // 4) буст мощности
+        shooter.setPower(BOOST);
+        sleep(300);
+
+        // 5) открыть гейт (выстрел)
+        shooter.openGate();
+        sleep(200);
+
+        // 6) подать второй мяч
+        intake.setPower(1.0);
+        sleep(400);
+        intake.setPower(0.0);
+
+        // 7) вернуть всё
+        shooter.setPower(startPower);
+        shooter.closeGate();
     }
+
 }
