@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.MyAutos.Alliance;
+package org.firstinspires.ftc.teamcode.MyAutos.NoINTAKE.FINAL;
 
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
@@ -9,10 +9,9 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.MecanumDrive;
 import org.firstinspires.ftc.teamcode.mechanisms.Shooter;
-import org.firstinspires.ftc.teamcode.mechanisms.Intake;
 
-@Autonomous(name = "RBCCF", group = "Auto")
-public class RedBaseCloseCorner_Final extends LinearOpMode {
+@Autonomous(name = "RBCCFN", group = "Auto")
+public class RedBaseCloseCorner_Final_Nointake extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -23,7 +22,6 @@ public class RedBaseCloseCorner_Final extends LinearOpMode {
         Pose2d startPose = new Pose2d(61, -14 * side, Math.toRadians(-180) * side);
         MecanumDrive drive = new MecanumDrive(hardwareMap, startPose);
         Shooter shooter = new Shooter(hardwareMap);
-        Intake intake = new Intake(hardwareMap);
 
         double shooterStartPower = 0.6;
 
@@ -37,7 +35,7 @@ public class RedBaseCloseCorner_Final extends LinearOpMode {
                 .strafeToLinearHeading(new Vector2d(-13, -16 * side), Math.toRadians(-135) * side)
                 .build();
         Actions.runBlocking(path);
-        fireBpulse(intake, shooter, shooterStartPower);
+        fireBpulse(shooter, shooterStartPower);
 
         // --- Подъезд к первым шарам ---
         path = drive.actionBuilder(new Pose2d(-13, -16 * side, Math.toRadians(-135) * side))
@@ -46,16 +44,14 @@ public class RedBaseCloseCorner_Final extends LinearOpMode {
                 .lineToYConstantHeading(-55 * side)
                 .lineToYConstantHeading(-16 * side)
                 .build();
-        intake.setPower(1.0);
         Actions.runBlocking(path);
-        intake.setPower(0.0);
 
         // --- Возврат к обелиску ---
         path = drive.actionBuilder(new Pose2d(34.5, -16 * side, Math.toRadians(-90) * side))
                 .strafeToLinearHeading(new Vector2d(-13, -16 * side), Math.toRadians(-135) * side)
                 .build();
         Actions.runBlocking(path);
-        fireBpulse(intake, shooter, shooterStartPower);
+        fireBpulse(shooter, shooterStartPower);
 
         // --- Выезд ко вторым шарам ---
         path = drive.actionBuilder(new Pose2d(-13, -16 * side, Math.toRadians(-135) * side))
@@ -64,51 +60,46 @@ public class RedBaseCloseCorner_Final extends LinearOpMode {
                 .setTangent(Math.toRadians(0))
                 .lineToXConstantHeading(60 * side)
                 .build();
-        intake.setPower(1.0);
         Actions.runBlocking(path);
-        intake.setPower(0.0);
 
         // --- Финальный подъезд к обелиску ---
         path = drive.actionBuilder(new Pose2d(60, -60 * side, Math.toRadians(0) * side))
                 .strafeToLinearHeading(new Vector2d(-13, -16 * side), Math.toRadians(-135) * side)
-                .strafeToLinearHeading(new Vector2d(44, -16 * side), Math.toRadians(-180))
                 .build();
         Actions.runBlocking(path);
-        fireBpulse(intake, shooter, shooterStartPower);
+        fireBpulse(shooter, shooterStartPower);
+
+        // --- Финальный отъезд для паркинга ---
+        path = drive.actionBuilder(new Pose2d(-13, -16 * side, Math.toRadians(-135) * side))
+                .strafeToConstantHeading(new Vector2d(30, -16 * side))
+                .build();
+        Actions.runBlocking(path);
     }
 
-    private void fireBpulse(Intake intake, Shooter shooter, double startPower) throws InterruptedException {
+    private void fireBpulse(Shooter shooter, double startPower) throws InterruptedException {
         final double BOOST = Math.min(startPower + 0.2, 1.0);
 
-        // 1) открыть гейт
+        // 1) открыть гейт (разрешаем мячу попасть в шутер)
         shooter.openGate();
 
-        // 2) подать первый мяч
-        intake.setPower(1.0);
-        sleep(250); // можно подстроить по скорости подачи
-        intake.setPower(0.0);
+        // 2) короткий подача, чтобы мяч встал в позицию
+        sleep(600);
 
-        // 3) закрыть гейт
+        // 3) закрыть гейт — фиксируем мяч внутри шутера
         shooter.closeGate();
-        sleep(150);
 
-        // 4) буст мощности
+        // 4) поднять мощность для компенсации потери импульса
         shooter.setPower(BOOST);
-        sleep(300);
+        sleep(300); // даём немного времени на повышение оборотов
 
-        // 5) открыть гейт (выстрел)
+        // 5) открыть гейт — производим выстрел
         shooter.openGate();
-        sleep(200);
 
-        // 6) подать второй мяч
-        intake.setPower(1.0);
-        sleep(400);
-        intake.setPower(0.0);
+        // 6) подать второй мяч (проталкиваем следующий)
+        sleep(600);
 
-        // 7) вернуть всё
+        // 7) вернуть всё в исходное состояние: мощность и закрыть гейт
         shooter.setPower(startPower);
         shooter.closeGate();
     }
-
-
 }
