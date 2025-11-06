@@ -32,13 +32,13 @@ public class RedBaseCloseCorner_Final_Nointake extends LinearOpMode {
 
         // --- Первый подъезд к обелиску ---
         Action path = drive.actionBuilder(startPose)
-                .strafeToLinearHeading(new Vector2d(-13, -16 * side), Math.toRadians(-135) * side)
+                .strafeToLinearHeading(new Vector2d(-19, -16 * side), Math.toRadians(-138) * side)
                 .build();
         Actions.runBlocking(path);
         fireBpulse(shooter, shooterStartPower);
 
         // --- Подъезд к первым шарам ---
-        path = drive.actionBuilder(new Pose2d(-13, -16 * side, Math.toRadians(-135) * side))
+        path = drive.actionBuilder(new Pose2d(-19, -16 * side, Math.toRadians(-138) * side))
                 .strafeToLinearHeading(new Vector2d(34.5, -15 * side), Math.toRadians(-90) * side)
                 .setTangent(Math.toRadians(270) * side)
                 .lineToYConstantHeading(-55 * side)
@@ -48,13 +48,13 @@ public class RedBaseCloseCorner_Final_Nointake extends LinearOpMode {
 
         // --- Возврат к обелиску ---
         path = drive.actionBuilder(new Pose2d(34.5, -16 * side, Math.toRadians(-90) * side))
-                .strafeToLinearHeading(new Vector2d(-13, -16 * side), Math.toRadians(-135) * side)
+                .strafeToLinearHeading(new Vector2d(-19, -16 * side), Math.toRadians(-138) * side)
                 .build();
         Actions.runBlocking(path);
         fireBpulse(shooter, shooterStartPower);
 
         // --- Выезд ко вторым шарам ---
-        path = drive.actionBuilder(new Pose2d(-13, -16 * side, Math.toRadians(-135) * side))
+        path = drive.actionBuilder(new Pose2d(-19, -16 * side, Math.toRadians(-138) * side))
                 .strafeToLinearHeading(new Vector2d(30, -16 * side), Math.toRadians(-90) * side)
                 .strafeToLinearHeading(new Vector2d(44, -60 * side), Math.toRadians(0) * side)
                 .setTangent(Math.toRadians(0))
@@ -64,13 +64,13 @@ public class RedBaseCloseCorner_Final_Nointake extends LinearOpMode {
 
         // --- Финальный подъезд к обелиску ---
         path = drive.actionBuilder(new Pose2d(60, -60 * side, Math.toRadians(0) * side))
-                .strafeToLinearHeading(new Vector2d(-13, -16 * side), Math.toRadians(-135) * side)
+                .strafeToLinearHeading(new Vector2d(-19, -16 * side), Math.toRadians(-138) * side)
                 .build();
         Actions.runBlocking(path);
         fireBpulse(shooter, shooterStartPower);
 
         // --- Финальный отъезд для паркинга ---
-        path = drive.actionBuilder(new Pose2d(-13, -16 * side, Math.toRadians(-135) * side))
+        path = drive.actionBuilder(new Pose2d(-19, -16 * side, Math.toRadians(-138) * side))
                 .strafeToConstantHeading(new Vector2d(30, -16 * side))
                 .build();
         Actions.runBlocking(path);
