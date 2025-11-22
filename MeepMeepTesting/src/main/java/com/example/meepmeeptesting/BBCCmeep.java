@@ -18,30 +18,39 @@ public class BBCCmeep {
                 .build();
 
         myBot.runAction(
-                myBot.getDrive().actionBuilder(new Pose2d(61, -14 * side, Math.toRadians(-180) * side))
-                        // --- Первый подъезд к обелиску ---
+                myBot.getDrive().actionBuilder(
+                                new Pose2d(61, -14 * side, Math.toRadians(-180) * side))
+
+                        // === 1. Первый выезд к обелиску ===
                         .strafeToLinearHeading(new Vector2d(-13, -16 * side), Math.toRadians(-135) * side)
 
-                        // --- Подъезд к первым шарам ---
-                        .strafeToLinearHeading(new Vector2d(34.5, -15 * side), Math.toRadians(-90) * side)
+                        // === 2. Первый забег за шарами ===
+                        .strafeToConstantHeading(new Vector2d(34.5, -16 * side))
+                        .strafeToLinearHeading(new Vector2d(34.5, -13 * side), Math.toRadians(-90) * side)
                         .setTangent(Math.toRadians(270) * side)
-                        .lineToYConstantHeading(-55 * side)
+                        .lineToYConstantHeading(-50 * side)
                         .lineToYConstantHeading(-16 * side)
 
-                        // --- Возврат к обелиску ---
+                        // === 3. Второй выезд к обелиску ===
                         .strafeToLinearHeading(new Vector2d(-13, -16 * side), Math.toRadians(-135) * side)
 
-                        // --- Выезд ко вторым шарам ---
-                        .lineToXLinearHeading(30, Math.toRadians(-90) * side)
-                        .splineToSplineHeading(new Pose2d(44, -60 * side, Math.toRadians(0) * side), Math.toRadians(-90) * side)
-                        .strafeToLinearHeading(new Vector2d(44, -60 * side), Math.toRadians(0) * side)
-                        .setTangent(Math.toRadians(0))
-                        .lineToXConstantHeading(60)
+                        // === 4. Второй забег ===
+                        .strafeToLinearHeading(new Vector2d(11.6, -13 * side), Math.toRadians(-90) * side)
+                        .setTangent(Math.toRadians(270) * side)
+                        .lineToYConstantHeading(-50 * side)
+                        .lineToYConstantHeading(-16 * side)
 
-
-                        // --- Финальный подъезд к обелиску ---
+                        // === 5. Третий выезд ===
                         .strafeToLinearHeading(new Vector2d(-13, -16 * side), Math.toRadians(-135) * side)
-                        .strafeToLinearHeading(new Vector2d(44, -16 * side), Math.toRadians(-180))
+
+                        // === 6. Третий забег ===
+                        .strafeToConstantHeading(new Vector2d(-12, -16 * side))
+                        .strafeToLinearHeading(new Vector2d(-12, -13 * side), Math.toRadians(-90) * side)
+                        .lineToYConstantHeading(-50 * side)
+                        .lineToYConstantHeading(-16 * side)
+
+                        // === 7. Четвёртый выезд к обелиску ===
+                        .strafeToLinearHeading(new Vector2d(-12, -13 * side), Math.toRadians(-135) * side)
 
                         .build()
         );

@@ -5,43 +5,50 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.IMU;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
-@TeleOp(name = "TEST KOTAK AKHMEDI", group = "TeleOp")
-public class TESTKOTAK extends OpMode {
+@TeleOp(name = "DriveWithBFireLogic", group = "TeleOp")
+public class DriveWithBFireLogic extends OpMode {
 
-    // Шасси
+    // --- Шасси ---
     DcMotor frontLeftDrive, frontRightDrive, backLeftDrive, backRightDrive;
-    // Ауттейк
-    DcMotor Outtake;
-    // IMU для field-centric
+
+    // --- Outtake / Intake / Servo ---
+    DcMotor Outtake, Intake;
+    Servo gateServo;
     IMU imu;
 
     // --- Outtake variables ---
     boolean motorOn = false;
-    boolean rampActive = false;
     boolean lastX = false;
-    boolean lastA = false;
-    double startPower = 0.55;        // регулируется LB/RB
-    double rampPower = 0.0;
-    final double MAX_RAMP_POWER = 0.8;
-    final double POWER_STEP = 0.05;
     boolean lastLB = false;
     boolean lastRB = false;
-    double rotate = 0.0;
+    double startPower = 0.55;
+    final double POWER_STEP = 0.05;
 
+    // --- Intake ---
+    boolean intakeOn = false;
+    boolean lastIntakeY = false;
 
+    // --- B pulse ---
+    boolean bActive = false;
+    long bStartTime = 0;
 
-    // --- Шасси ---
+    // --- Servo ---
+    boolean servoOpen = false;
+    boolean lastA = false;
+    final double openPosition = 0.65;
+    final double closePosition = 1.0;
+
+    // --- Brake ---
     DcMotor.ZeroPowerBehavior prevFLZeroBehavior, prevFRZeroBehavior, prevBLZeroBehavior, prevBRZeroBehavior;
     boolean brakeModeActive = false;
 
     @Override
     public void init() {
         // --- Шасси ---
-
-
         frontLeftDrive = hardwareMap.get(DcMotor.class, "leftFront");
         frontRightDrive = hardwareMap.get(DcMotor.class, "rightFront");
         backLeftDrive = hardwareMap.get(DcMotor.class, "leftBack");
@@ -55,18 +62,20 @@ public class TESTKOTAK extends OpMode {
         prevBLZeroBehavior = backLeftDrive.getZeroPowerBehavior();
         prevBRZeroBehavior = backRightDrive.getZeroPowerBehavior();
 
-        // --- Outtake ---
+        // --- Outtake / Intake / Servo ---
         Outtake = hardwareMap.get(DcMotor.class, "Outtake");
+        Intake = hardwareMap.get(DcMotor.class, "Intake");
+        gateServo = hardwareMap.get(Servo.class, "GateServo");
+
         Outtake.setDirection(DcMotorSimple.Direction.REVERSE);
-        rampPower = startPower;
+        Intake.setDirection(DcMotorSimple.Direction.REVERSE);
+        gateServo.setPosition(closePosition);
 
         // --- IMU ---
         imu = hardwareMap.get(IMU.class, "imu");
-        RevHubOrientationOnRobot.LogoFacingDirection logoDirection =
-                RevHubOrientationOnRobot.LogoFacingDirection.RIGHT;
-        RevHubOrientationOnRobot.UsbFacingDirection usbDirection =
-                RevHubOrientationOnRobot.UsbFacingDirection.UP;
-        imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(logoDirection, usbDirection)));
+        imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(
+                RevHubOrientationOnRobot.LogoFacingDirection.RIGHT,
+                RevHubOrientationOnRobot.UsbFacingDirection.UP)));
 
         telemetry.addLine("Initialized — ready to start!");
         telemetry.update();
@@ -77,18 +86,9 @@ public class TESTKOTAK extends OpMode {
         // --- Joysticks ---
         double forward = -gamepad1.left_stick_y;
         double right = gamepad1.left_stick_x;
-        // сырой ввод от триггеров
-        double targetRotate = gamepad1.right_trigger - gamepad1.left_trigger;
+        double rotate = gamepad1.right_trigger - gamepad1.left_trigger;
 
-// мягкая кривая для большей точности при малых поворотах
-        targetRotate = targetRotate * Math.abs(targetRotate); // или Math.pow(targetRotate, 3);
-
-
-        rotate = 0.8 * rotate + 0.2 * targetRotate;
-
-        if (gamepad1.options) {
-            imu.resetYaw();
-        }
+        if (gamepad1.options) imu.resetYaw();
 
         // D-pad приоритет
         if (gamepad1.dpad_up) { forward = 1.0; right = 0.0; }
@@ -97,8 +97,7 @@ public class TESTKOTAK extends OpMode {
         else if (gamepad1.dpad_right) { forward = 0.0; right = 1.0; }
 
         // --- Slow mode ---
-        boolean slowMode = gamepad1.right_bumper;
-        double speedMultiplier = slowMode ? 0.2 : 1.0;
+        double speedMultiplier = gamepad1.right_bumper ? 0.2 : 1.0;
 
         // --- Brake ---
         if (gamepad1.b) {
@@ -124,40 +123,76 @@ public class TESTKOTAK extends OpMode {
             driveFieldRelative(forward * speedMultiplier, right * speedMultiplier, rotate * speedMultiplier * 0.8);
         }
 
-        // --- Outtake control ---
+        // --- Gamepad 2 Controls ---
         boolean currentX = gamepad2.x;
         boolean currentA = gamepad2.a;
         boolean currentLB = gamepad2.left_bumper;
         boolean currentRB = gamepad2.right_bumper;
+        boolean currentY = gamepad2.y;
+        boolean currentB = gamepad2.b;
 
+        // --- Toggle Outtake ---
         if (currentX && !lastX) motorOn = !motorOn;
-        if (currentA && !lastA) { rampActive = true; rampPower = startPower; }
-        if (!currentA) rampActive = false;
+
+        // --- Adjust startPower ---
         if (currentLB && !lastLB) startPower = Math.max(0.1, startPower - POWER_STEP);
         if (currentRB && !lastRB) startPower = Math.min(1.0, startPower + POWER_STEP);
 
-        double appliedPower = 0.0;
-        if (motorOn) {
-            if (rampActive && rampPower < MAX_RAMP_POWER) rampPower += 0.003;
-            appliedPower = rampActive ? rampPower : startPower;
-            Outtake.setPower(appliedPower);
-        } else {
-            appliedPower = 0.0;
-            Outtake.setPower(0.0);
+        // --- Toggle Servo manually ---
+        if (currentA && !lastA) {
+            servoOpen = !servoOpen;
+            gateServo.setPosition(servoOpen ? openPosition : closePosition);
         }
 
+        // --- Toggle Intake ---
+        if (currentY && !lastIntakeY) intakeOn = !intakeOn;
+
+        // --- Start B pulse (fire sequence) ---
+        if (currentB && !bActive) {
+            bActive = true;
+            bStartTime = System.currentTimeMillis();
+        }
+
+        double intakePower = 0.0;
+        double outtakePower = motorOn ? startPower : 0.0;
+
+        if (bActive) {
+            long elapsed = System.currentTimeMillis() - bStartTime;
+            double BOOST = Math.min(startPower + 0.16, 1.0);
+
+            if (elapsed < 150) { gateServo.setPosition(openPosition); intakePower = 1.0; }
+            else if (elapsed < 300) { intakePower = 0.0; }
+            else if (elapsed < 500) { gateServo.setPosition(closePosition); }
+            else if (elapsed < 700) { outtakePower = BOOST; }
+            else if (elapsed < 900) { gateServo.setPosition(openPosition); }
+            else if (elapsed < 1250) { intakePower = 1.0; }
+            else if (elapsed < 1400) { intakePower = 0.0; }
+            else { bActive = false; gateServo.setPosition(closePosition); outtakePower = startPower; }
+        } else {
+            if (gamepad2.dpad_up) intakePower = -1.0;
+            else if (gamepad2.dpad_down) intakePower = 1.0;
+            else intakePower = intakeOn ? 1.0 : 0.0;
+        }
+
+        // --- Apply powers ---
+        Outtake.setPower(outtakePower);
+        Intake.setPower(intakePower);
+
+        // --- Update states ---
         lastX = currentX;
         lastA = currentA;
         lastLB = currentLB;
         lastRB = currentRB;
+        lastIntakeY = currentY;
 
         // --- Telemetry ---
-        telemetry.addData("Motor On", motorOn);
-        telemetry.addData("Ramp Active", rampActive);
+        telemetry.addData("Outtake On", motorOn);
         telemetry.addData("Start Power", startPower);
-        telemetry.addData("Ramp Power", rampPower);
-        telemetry.addData("Applied Power", appliedPower);
-        telemetry.addData("Slow Mode (RB1)", slowMode);
+        telemetry.addData("Outtake Power", outtakePower);
+        telemetry.addData("Intake Power", intakePower);
+        telemetry.addData("B Pulse Active", bActive);
+        telemetry.addData("Servo Pos", gateServo.getPosition());
+        telemetry.addData("Slow Mode (RB1)", speedMultiplier < 1.0);
         telemetry.addData("Brake Active (B1)", brakeModeActive);
         telemetry.update();
     }

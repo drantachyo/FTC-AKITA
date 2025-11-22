@@ -4,44 +4,51 @@ import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.teamcode.mechanisms.Shooter;
 
-@TeleOp(name = "TEST KOTAK AKHMEDI", group = "TeleOp")
-public class TESTKOTAK extends OpMode {
+@TeleOp(name = "FLYWHEEL RAPIDSHOOT", group = "TeleOp")
+public class TeleOpFlyWheelPID extends OpMode {
 
-    // Шасси
+    // --- Шасси ---
     DcMotor frontLeftDrive, frontRightDrive, backLeftDrive, backRightDrive;
-    // Ауттейк
-    DcMotor Outtake;
-    // IMU для field-centric
+
+    // --- Outtake / Intake ---
+    Shooter shooter;
+    DcMotor Intake;
     IMU imu;
 
     // --- Outtake variables ---
     boolean motorOn = false;
-    boolean rampActive = false;
     boolean lastX = false;
-    boolean lastA = false;
-    double startPower = 0.55;        // регулируется LB/RB
-    double rampPower = 0.0;
-    final double MAX_RAMP_POWER = 0.8;
-    final double POWER_STEP = 0.05;
     boolean lastLB = false;
     boolean lastRB = false;
-    double rotate = 0.0;
+    double startPower = 0.55;
+    final double POWER_STEP = 0.05;
 
+    // --- Intake ---
+    boolean intakeOn = false;
+    boolean lastIntakeY = false;
 
+    // --- B pulse ---
+    boolean bActive = false;
+    long bStartTime = 0;
 
-    // --- Шасси ---
+    // --- Servo (через Shooter) ---
+    boolean servoOpen = false;
+    boolean lastA = false;
+
+    // --- Brake ---
     DcMotor.ZeroPowerBehavior prevFLZeroBehavior, prevFRZeroBehavior, prevBLZeroBehavior, prevBRZeroBehavior;
     boolean brakeModeActive = false;
+
+    // Mapping startPower -> RPM: подстрой под мотор
+    private final double MAX_RPM_GUESS = 6000.0; // проверь тип мотора
 
     @Override
     public void init() {
         // --- Шасси ---
-
-
         frontLeftDrive = hardwareMap.get(DcMotor.class, "leftFront");
         frontRightDrive = hardwareMap.get(DcMotor.class, "rightFront");
         backLeftDrive = hardwareMap.get(DcMotor.class, "leftBack");
@@ -55,18 +62,15 @@ public class TESTKOTAK extends OpMode {
         prevBLZeroBehavior = backLeftDrive.getZeroPowerBehavior();
         prevBRZeroBehavior = backRightDrive.getZeroPowerBehavior();
 
-        // --- Outtake ---
-        Outtake = hardwareMap.get(DcMotor.class, "Outtake");
-        Outtake.setDirection(DcMotorSimple.Direction.REVERSE);
-        rampPower = startPower;
+        // --- Outtake / Intake ---
+        shooter = new Shooter(hardwareMap);
+        Intake = hardwareMap.get(DcMotor.class, "Intake");
 
         // --- IMU ---
         imu = hardwareMap.get(IMU.class, "imu");
-        RevHubOrientationOnRobot.LogoFacingDirection logoDirection =
-                RevHubOrientationOnRobot.LogoFacingDirection.RIGHT;
-        RevHubOrientationOnRobot.UsbFacingDirection usbDirection =
-                RevHubOrientationOnRobot.UsbFacingDirection.UP;
-        imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(logoDirection, usbDirection)));
+        imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(
+                RevHubOrientationOnRobot.LogoFacingDirection.RIGHT,
+                RevHubOrientationOnRobot.UsbFacingDirection.UP)));
 
         telemetry.addLine("Initialized — ready to start!");
         telemetry.update();
@@ -77,18 +81,9 @@ public class TESTKOTAK extends OpMode {
         // --- Joysticks ---
         double forward = -gamepad1.left_stick_y;
         double right = gamepad1.left_stick_x;
-        // сырой ввод от триггеров
-        double targetRotate = gamepad1.right_trigger - gamepad1.left_trigger;
+        double rotate = gamepad1.right_trigger - gamepad1.left_trigger;
 
-// мягкая кривая для большей точности при малых поворотах
-        targetRotate = targetRotate * Math.abs(targetRotate); // или Math.pow(targetRotate, 3);
-
-
-        rotate = 0.8 * rotate + 0.2 * targetRotate;
-
-        if (gamepad1.options) {
-            imu.resetYaw();
-        }
+        if (gamepad1.options) imu.resetYaw();
 
         // D-pad приоритет
         if (gamepad1.dpad_up) { forward = 1.0; right = 0.0; }
@@ -96,9 +91,7 @@ public class TESTKOTAK extends OpMode {
         else if (gamepad1.dpad_left) { forward = 0.0; right = -1.0; }
         else if (gamepad1.dpad_right) { forward = 0.0; right = 1.0; }
 
-        // --- Slow mode ---
-        boolean slowMode = gamepad1.right_bumper;
-        double speedMultiplier = slowMode ? 0.2 : 1.0;
+        double speedMultiplier = gamepad1.right_bumper ? 0.2 : 1.0;
 
         // --- Brake ---
         if (gamepad1.b) {
@@ -109,57 +102,113 @@ public class TESTKOTAK extends OpMode {
                 backRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
                 brakeModeActive = true;
             }
-            frontLeftDrive.setPower(0.0);
-            frontRightDrive.setPower(0.0);
-            backLeftDrive.setPower(0.0);
-            backRightDrive.setPower(0.0);
+            stopDrive();
         } else {
             if (brakeModeActive) {
-                frontLeftDrive.setZeroPowerBehavior(prevFLZeroBehavior);
-                frontRightDrive.setZeroPowerBehavior(prevFRZeroBehavior);
-                backLeftDrive.setZeroPowerBehavior(prevBLZeroBehavior);
-                backRightDrive.setZeroPowerBehavior(prevBRZeroBehavior);
+                restoreZeroPowerBehavior();
                 brakeModeActive = false;
             }
             driveFieldRelative(forward * speedMultiplier, right * speedMultiplier, rotate * speedMultiplier * 0.8);
         }
 
-        // --- Outtake control ---
+        // --- Gamepad 2 Controls ---
         boolean currentX = gamepad2.x;
         boolean currentA = gamepad2.a;
         boolean currentLB = gamepad2.left_bumper;
         boolean currentRB = gamepad2.right_bumper;
+        boolean currentY = gamepad2.y;
+        boolean currentB = gamepad2.b;
 
+        // --- Toggle Outtake ---
         if (currentX && !lastX) motorOn = !motorOn;
-        if (currentA && !lastA) { rampActive = true; rampPower = startPower; }
-        if (!currentA) rampActive = false;
+
+        // --- Adjust RPM step ---
         if (currentLB && !lastLB) startPower = Math.max(0.1, startPower - POWER_STEP);
         if (currentRB && !lastRB) startPower = Math.min(1.0, startPower + POWER_STEP);
 
-        double appliedPower = 0.0;
-        if (motorOn) {
-            if (rampActive && rampPower < MAX_RAMP_POWER) rampPower += 0.003;
-            appliedPower = rampActive ? rampPower : startPower;
-            Outtake.setPower(appliedPower);
-        } else {
-            appliedPower = 0.0;
-            Outtake.setPower(0.0);
+        // --- Toggle Gate ---
+        if (currentA && !lastA) {
+            servoOpen = !servoOpen;
+            if (servoOpen) shooter.openGate(); else shooter.closeGate();
         }
 
+        // --- Toggle Intake ---
+        if (currentY && !lastIntakeY) intakeOn = !intakeOn;
+
+        // --- Fire sequence ---
+        if (currentB && !bActive) {
+            bActive = true;
+            bStartTime = System.currentTimeMillis();
+        }
+
+        double intakePower = 0.0;
+        double mappedTargetRPM = startPower * MAX_RPM_GUESS;
+
+        // --- Main shooter update ---
+        shooter.setTargetRPM(motorOn ? mappedTargetRPM : 0);
+        shooter.update();
+
+        // --- B Pulse logic ---
+        if (bActive) {
+            long elapsed = System.currentTimeMillis() - bStartTime;
+
+            if (elapsed < 150) {
+                shooter.openGate(); intakePower = 1.0;
+            }
+            else if (elapsed < 300) intakePower = 0.0;
+            else if (elapsed < 500) shooter.closeGate();
+            else if (elapsed < 700) shooter.requestForcedBoost(200);
+            else if (elapsed < 900) shooter.openGate();
+            else if (elapsed < 1250) intakePower = 1.0;
+            else if (elapsed < 1400) intakePower = 0.0;
+            else {
+                bActive = false;
+                shooter.closeGate();
+            }
+        } else {
+            if (gamepad2.dpad_up) intakePower = -1.0;
+            else if (gamepad2.dpad_down) intakePower = 1.0;
+            else intakePower = intakeOn ? -1.0 : 0.0;
+        }
+
+        // --- Apply intake power ---
+        Intake.setPower(intakePower);
+
+        // --- Update states ---
         lastX = currentX;
         lastA = currentA;
         lastLB = currentLB;
         lastRB = currentRB;
+        lastIntakeY = currentY;
 
         // --- Telemetry ---
-        telemetry.addData("Motor On", motorOn);
-        telemetry.addData("Ramp Active", rampActive);
+        telemetry.addData("Outtake On", motorOn);
         telemetry.addData("Start Power", startPower);
-        telemetry.addData("Ramp Power", rampPower);
-        telemetry.addData("Applied Power", appliedPower);
-        telemetry.addData("Slow Mode (RB1)", slowMode);
+        telemetry.addData("Target RPM (mapped)", mappedTargetRPM);
+        telemetry.addData("Shooter RPM (measured)", String.format("%.0f", shooter.getLastRPM()));
+        telemetry.addData("Shooter inRecovery", shooter.isInRecovery());
+        telemetry.addData("Intake Power", intakePower);
+        telemetry.addData("B Pulse Active", bActive);
+        telemetry.addData("Servo Open", servoOpen);
+        telemetry.addData("Slow Mode (RB1)", speedMultiplier < 1.0);
         telemetry.addData("Brake Active (B1)", brakeModeActive);
+        telemetry.addData("Shooter RPM (measured)", String.format("%.0f", shooter.getLastRPM()));
+        telemetry.addData("Motor ticks/sec", shooter.getMotor().getVelocity());
         telemetry.update();
+    }
+
+    private void stopDrive() {
+        frontLeftDrive.setPower(0.0);
+        frontRightDrive.setPower(0.0);
+        backLeftDrive.setPower(0.0);
+        backRightDrive.setPower(0.0);
+    }
+
+    private void restoreZeroPowerBehavior() {
+        frontLeftDrive.setZeroPowerBehavior(prevFLZeroBehavior);
+        frontRightDrive.setZeroPowerBehavior(prevFRZeroBehavior);
+        backLeftDrive.setZeroPowerBehavior(prevBLZeroBehavior);
+        backRightDrive.setZeroPowerBehavior(prevBRZeroBehavior);
     }
 
     private void driveFieldRelative(double forward, double right, double rotate) {
