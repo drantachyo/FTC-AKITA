@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.Learning;
+package org.firstinspires.ftc.teamcode.MyTeleOp;
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -6,20 +6,20 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
-@TeleOp(name = "Drive + PID Shoot Fixed", group = "TeleOp")
+@TeleOp(name = "Drive + PID Shoot CRServo", group = "TeleOp")
 public class DriveWithPIDShoot extends OpMode {
     // --- Шасси ---
     DcMotor frontLeftDrive, frontRightDrive, backLeftDrive, backRightDrive;
 
-    // --- Outtake / Intake / Servo ---
+    // --- Shooter / Intake / Feeder ---
     DcMotorEx Outtake;
     DcMotor Intake;
-    Servo gateServo;
+    CRServo feederServo;
     IMU imu;
 
     // --- PIDF настройки ---
@@ -31,22 +31,18 @@ public class DriveWithPIDShoot extends OpMode {
     long boostStart = 0;
     double dropThreshold = 250;
 
-    // --- Intake / Servo flags ---
-    boolean intakeOn = false;
-    boolean servoOpen = false;
-    boolean lastX=false, lastA=false, lastY=false, lastB=false;
-    boolean lastLB = false, lastRB = false;
+    // --- Intake / Feeder flags ---
+    boolean intakeOn = false;       // Y toggle
+    boolean feederReverse = false;  // CRServo против подачи (Y)
     boolean shooterOn = false;
-
-    final double openPosition = 0.65;
-    final double closePosition = 1.0;
+    boolean lastX=false, lastY=false, lastB=false;
 
     // --- Brake ---
     DcMotor.ZeroPowerBehavior prevFLZeroBehavior, prevFRZeroBehavior, prevBLZeroBehavior, prevBRZeroBehavior;
     boolean brakeModeActive = false;
 
     // --- B button sequence ---
-    enum BState { OPEN_SERVO, INTAKE, DONE }
+    enum BState { FEED_SEQUENCE, DONE }
     BState bState = BState.DONE;
     long bSequenceStart = 0;
 
@@ -65,14 +61,14 @@ public class DriveWithPIDShoot extends OpMode {
         prevBLZeroBehavior = backLeftDrive.getZeroPowerBehavior();
         prevBRZeroBehavior = backRightDrive.getZeroPowerBehavior();
 
-        // --- Outtake / Intake / Servo ---
+        // --- Shooter / Intake / Feeder ---
         Outtake = hardwareMap.get(DcMotorEx.class, "Outtake");
         Intake = hardwareMap.get(DcMotor.class, "Intake");
-        gateServo = hardwareMap.get(Servo.class, "GateServo");
+        feederServo = hardwareMap.get(CRServo.class, "GateServo"); // CRServo
 
         Outtake.setDirection(DcMotorSimple.Direction.REVERSE);
         Intake.setDirection(DcMotorSimple.Direction.REVERSE);
-        gateServo.setPosition(closePosition);
+        feederServo.setPower(0);
 
         Outtake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         Intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -136,61 +132,36 @@ public class DriveWithPIDShoot extends OpMode {
 
         // --- Gamepad 2 Controls ---
         boolean currentX = gamepad2.x;
-        boolean currentA = gamepad2.a;
         boolean currentY = gamepad2.y;
         boolean currentB = gamepad2.b;
-        boolean currentLB = gamepad2.left_bumper;
-        boolean currentRB = gamepad2.right_bumper;
 
-        // --- Adjust targetRPM ---
-        if(currentLB && !lastLB) targetRPM = Math.max(500, targetRPM - 250);
-        if(currentRB && !lastRB) targetRPM = Math.min(6000, targetRPM + 250);
-        lastLB = currentLB;
-        lastRB = currentRB;
-
-        targetTPS = targetRPM / 60.0 * 28.0;
-
-        // --- Toggle Intake / Servo ---
-        if(currentY && !lastY) intakeOn = !intakeOn;
-        if(currentA && !lastA) {
-            servoOpen = !servoOpen;
-            gateServo.setPosition(servoOpen ? openPosition : closePosition);
-        }
-
-        // --- Toggle Shooter ---
+        // --- Toggle shooter ---
         if(currentX && !lastX) shooterOn = !shooterOn;
 
-        // --- B Sequence ---
-        if(currentB && !lastB && bState == BState.DONE){
-            bState = BState.OPEN_SERVO;
-            bSequenceStart = System.currentTimeMillis();
-            gateServo.setPosition(openPosition);
+        // --- Y toggle: intake + CRServo против подачи ---
+        if(currentY && !lastY){
+            intakeOn = !intakeOn;
+            feederReverse = intakeOn;
         }
 
-        // --- Update B sequence and intake ---
-        if(bState != BState.DONE){
-            long elapsed = System.currentTimeMillis() - bSequenceStart;
-            switch(bState){
-                case OPEN_SERVO:
-                    if(elapsed >= 200){ // 0.2 секунды
-                        Intake.setPower(1.0);
-                        bSequenceStart = System.currentTimeMillis();
-                        bState = BState.INTAKE;
-                    }
-                    break;
-                case INTAKE:
-                    if(elapsed >= 500){ // 0.5 секунды
-                        Intake.setPower(0);
-                        gateServo.setPosition(closePosition);
-                        bState = BState.DONE;
-                    }
-                    break;
-                default:
-                    break;
+        // --- B sequence: auto feed in shooter ---
+        if(currentB && !lastB && bState == BState.DONE){
+            bState = BState.FEED_SEQUENCE;
+            bSequenceStart = System.currentTimeMillis();
+            feederServo.setPower(1.0); // к шутеру
+            Intake.setPower(1.0);
+        }
+
+        if(bState == BState.FEED_SEQUENCE){
+            if(System.currentTimeMillis() - bSequenceStart >= 1400){
+                feederServo.setPower(0);
+                Intake.setPower(0);
+                bState = BState.DONE;
             }
         } else {
-            // если B-последовательность не активна, управляем интейком вручную
+            // ручное управление Y
             Intake.setPower(intakeOn ? 1.0 : 0.0);
+            feederServo.setPower(feederReverse ? -1.0 : 0.0);
         }
 
         // --- Shooter PID ---
@@ -198,7 +169,6 @@ public class DriveWithPIDShoot extends OpMode {
         if(shooterOn) {
             if(targetRPM - currentRPM > dropThreshold) boostStart = System.currentTimeMillis();
             boolean boosting = (System.currentTimeMillis() - boostStart) < boostTime;
-
             double velocityToSet = targetTPS * (boosting ? 1.0 + boostPower : 1.0);
             Outtake.setVelocity(velocityToSet);
         } else {
@@ -207,7 +177,6 @@ public class DriveWithPIDShoot extends OpMode {
 
         // --- Update last buttons ---
         lastX = currentX;
-        lastA = currentA;
         lastY = currentY;
         lastB = currentB;
 
@@ -215,8 +184,8 @@ public class DriveWithPIDShoot extends OpMode {
         telemetry.addData("Target RPM", targetRPM);
         telemetry.addData("Current RPM", currentRPM);
         telemetry.addData("Shooter On", shooterOn);
-        telemetry.addData("Intake", Intake.getPower());
-        telemetry.addData("Servo Pos", gateServo.getPosition());
+        telemetry.addData("Intake Power", Intake.getPower());
+        telemetry.addData("Feeder Power", feederServo.getPower());
         telemetry.addData("B Sequence Active", bState != BState.DONE);
         telemetry.update();
     }

@@ -9,31 +9,44 @@ import com.noahbres.meepmeep.roadrunner.entity.RoadRunnerBotEntity;
 public class BBFCmeep {
     public static void main(String[] args) {
         MeepMeep meepMeep = new MeepMeep(800);
-
         RoadRunnerBotEntity myBot = new DefaultBotBuilder(meepMeep)
                 .setConstraints(70, 55, Math.toRadians(360), Math.toRadians(360), 15)
                 .build();
 
         myBot.runAction(
-                myBot.getDrive().actionBuilder(new Pose2d(-50, -50, Math.toRadians(234)))
-                        // Первый подъезд к обелиску
-                        .strafeToLinearHeading(new Vector2d(-19, -16), Math.toRadians(230))
+                myBot.getDrive().actionBuilder(
+                                new Pose2d(-51, -49, Math.toRadians(-125)))
 
-                        // Сбор первых шаров
-                        .strafeToLinearHeading(new Vector2d(-11.5, -16), Math.toRadians(270))
-                        .strafeToLinearHeading(new Vector2d(-11.5, -50), Math.toRadians(270))
+                        // === 1. Первый выезд к обелиску ===
+                        .strafeToLinearHeading(new Vector2d(-12, -16), Math.toRadians(-135))
+                        // === 2. Первый забег за шарами ===
+                        .turn(Math.toRadians(45))
+                        .strafeToConstantHeading(new Vector2d(-12, -53))
+                        .strafeToConstantHeading(new Vector2d(-3, -40))
+                        .strafeToConstantHeading(new Vector2d(-3, -53))
 
-                        // Возврат к обелиску для второго выстрела
-                        .strafeToLinearHeading(new Vector2d(-19, -16), Math.toRadians(230))
+                        // === 3. Второй выезд к обелиску ===
+                        .strafeToLinearHeading(new Vector2d(-12, -16), Math.toRadians(-135))
 
-                        // Сбор вторых шаров
-                        .strafeToLinearHeading(new Vector2d(11.5, -16), Math.toRadians(270))
-                        .strafeToLinearHeading(new Vector2d(11.5, -50), Math.toRadians(270))
-                        //возврат к обелиску для третьего выстрела
-                        .strafeToLinearHeading(new Vector2d(-19, -16), Math.toRadians(230))
+                        // === 4. Второй забег ===
+                        .strafeToLinearHeading(new Vector2d(11.5, -16), Math.toRadians(-90))
+                        .setTangent(Math.toRadians(270))
+                        .lineToYConstantHeading(-60)
+                        .lineToYConstantHeading(-50)
 
-                        // Финальная парковка
-                        .strafeToConstantHeading(new Vector2d(14, -14))
+
+                        // === 5. Третий выезд ===
+                        .strafeToLinearHeading(new Vector2d(-12, -16), Math.toRadians(-135))
+
+                        // === 6. Третий забег ===
+                        .strafeToLinearHeading(new Vector2d(34.5, -14), Math.toRadians(-90))
+                        .setTangent(Math.toRadians(-90))
+                        .lineToYConstantHeading(-60)
+
+
+                        // === 7. Четвёртый выезд к обелиску ===
+                        .strafeToLinearHeading(new Vector2d(50, -14), Math.toRadians(-150))
+
                         .build()
         );
 
@@ -43,4 +56,5 @@ public class BBFCmeep {
                 .addEntity(myBot)
                 .start();
     }
+
 }
