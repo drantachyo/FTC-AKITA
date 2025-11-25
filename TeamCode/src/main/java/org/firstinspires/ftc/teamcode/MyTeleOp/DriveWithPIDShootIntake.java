@@ -11,8 +11,8 @@ import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
-@TeleOp(name = "Drive + PID Shoot CRServo", group = "TeleOp")
-public class DriveWithPIDShoot extends OpMode {
+@TeleOp(name = "Drive + PID Shoot + Intake/CRServo", group = "TeleOp")
+public class DriveWithPIDShootIntake extends OpMode {
     // --- Шасси ---
     DcMotor frontLeftDrive, frontRightDrive, backLeftDrive, backRightDrive;
 
@@ -31,20 +31,13 @@ public class DriveWithPIDShoot extends OpMode {
     long boostStart = 0;
     double dropThreshold = 250;
 
-    // --- Intake / Feeder flags ---
-    boolean intakeOn = false;       // Y toggle
-    boolean feederReverse = false;  // CRServo против подачи (Y)
+    // --- Shooter flag ---
     boolean shooterOn = false;
     boolean lastX=false, lastY=false, lastB=false;
 
     // --- Brake ---
     DcMotor.ZeroPowerBehavior prevFLZeroBehavior, prevFRZeroBehavior, prevBLZeroBehavior, prevBRZeroBehavior;
     boolean brakeModeActive = false;
-
-    // --- B button sequence ---
-    enum BState { FEED_SEQUENCE, DONE }
-    BState bState = BState.DONE;
-    long bSequenceStart = 0;
 
     @Override
     public void init() {
@@ -138,36 +131,22 @@ public class DriveWithPIDShoot extends OpMode {
         // --- Toggle shooter ---
         if(currentX && !lastX) shooterOn = !shooterOn;
 
-        // --- Y toggle: intake + CRServo против подачи ---
-        if(currentY && !lastY){
-            intakeOn = !intakeOn;
-            feederReverse = intakeOn;
-        }
-
-        // --- B sequence: auto feed in shooter ---
-        if(currentB && !lastB && bState == BState.DONE){
-            bState = BState.FEED_SEQUENCE;
-            bSequenceStart = System.currentTimeMillis();
-            feederServo.setPower(1.0); // к шутеру
+        // --- Intake + CRServo ---
+        if(currentY){            // Y → Intake + / Feeder -
             Intake.setPower(1.0);
-        }
-
-        if(bState == BState.FEED_SEQUENCE){
-            if(System.currentTimeMillis() - bSequenceStart >= 1400){
-                feederServo.setPower(0);
-                Intake.setPower(0);
-                bState = BState.DONE;
-            }
-        } else {
-            // ручное управление Y
-            Intake.setPower(intakeOn ? 1.0 : 0.0);
-            feederServo.setPower(feederReverse ? -1.0 : 0.0);
+            feederServo.setPower(-1.0);
+        } else if(currentB){      // B → Intake + / Feeder +
+            Intake.setPower(1.0);
+            feederServo.setPower(1.0);
+        } else {                  // кнопки не нажаты → стоп
+            Intake.setPower(0);
+            feederServo.setPower(0);
         }
 
         // --- Shooter PID ---
         double currentRPM = Outtake.getVelocity()/28.0*60.0;
         if(shooterOn) {
-            if(targetRPM - currentRPM > dropThreshold) boostStart = System.currentTimeMillis();
+            if(targetRPM - currentRPM > 250) boostStart = System.currentTimeMillis();
             boolean boosting = (System.currentTimeMillis() - boostStart) < boostTime;
             double velocityToSet = targetTPS * (boosting ? 1.0 + boostPower : 1.0);
             Outtake.setVelocity(velocityToSet);
@@ -186,7 +165,6 @@ public class DriveWithPIDShoot extends OpMode {
         telemetry.addData("Shooter On", shooterOn);
         telemetry.addData("Intake Power", Intake.getPower());
         telemetry.addData("Feeder Power", feederServo.getPower());
-        telemetry.addData("B Sequence Active", bState != BState.DONE);
         telemetry.update();
     }
 

@@ -13,17 +13,15 @@ import org.firstinspires.ftc.teamcode.MecanumDrive;
 import org.firstinspires.ftc.teamcode.mechanisms.Intake;
 import org.firstinspires.ftc.teamcode.mechanisms.Shooter;
 
-@Autonomous(name = "BBCC_Mangystau_PID2_MEPMEEP", group = "Auto")
-public class BlueBaseCloseCorner extends LinearOpMode {
-
+@Autonomous(name = "BBFC_Mangystau_PID2_MEPMEEP_StrafeTurn", group = "Auto")
+public class BlueBaseFarCornerStrafeTurn extends LinearOpMode {
 
     double kP = 33.0, kI = 0, kD = 2.0, kF = 14.0;
 
     @Override
     public void runOpMode() throws InterruptedException {
 
-
-        Pose2d startPose = new Pose2d(61, -14, Math.toRadians(-180));
+        Pose2d startPose = new Pose2d(-51, -49, Math.toRadians(-125));
         MecanumDrive drive = new MecanumDrive(hardwareMap, startPose);
 
         Shooter shooter = new Shooter(hardwareMap);
@@ -37,7 +35,6 @@ public class BlueBaseCloseCorner extends LinearOpMode {
 
         waitForStart();
 
-        // старт с низким RPM для экономии
         setShooterRPM(shooter, 1000);
         intake.collect();
         sleep(150);
@@ -57,8 +54,9 @@ public class BlueBaseCloseCorner extends LinearOpMode {
         // === 2. Первый забег за шарами ===
         setShooterRPM(shooter, 1200);
         intake.collect();
+        // вместо turn делаем микро-смещение по Y с новым heading
         Action toBalls1 = drive.actionBuilder(new Pose2d(-12, -16, Math.toRadians(-135)))
-                .turn(Math.toRadians(45))
+                .strafeToLinearHeading(new Vector2d(-12, -17), Math.toRadians(45))
                 .strafeToConstantHeading(new Vector2d(-12, -53))
                 .strafeToConstantHeading(new Vector2d(-3, -40))
                 .strafeToConstantHeading(new Vector2d(-3, -53))
@@ -79,7 +77,7 @@ public class BlueBaseCloseCorner extends LinearOpMode {
         setShooterRPM(shooter, 1200);
         intake.collect();
         Action toBalls2 = drive.actionBuilder(new Pose2d(-12, -16, Math.toRadians(-135)))
-                .strafeToLinearHeading(new Vector2d(11.5, -16), Math.toRadians(-90))
+                .strafeToLinearHeading(new Vector2d(11.5, -17), Math.toRadians(-90))
                 .setTangent(Math.toRadians(270))
                 .lineToYConstantHeading(-60)
                 .lineToYConstantHeading(-50)
@@ -100,7 +98,7 @@ public class BlueBaseCloseCorner extends LinearOpMode {
         setShooterRPM(shooter, 1200);
         intake.collect();
         Action toBalls3 = drive.actionBuilder(new Pose2d(-12, -16, Math.toRadians(-135)))
-                .strafeToLinearHeading(new Vector2d(34.5, -14), Math.toRadians(-90))
+                .strafeToLinearHeading(new Vector2d(34.5, -15), Math.toRadians(-90))
                 .setTangent(Math.toRadians(-90))
                 .lineToYConstantHeading(-60)
                 .build();
@@ -134,7 +132,6 @@ public class BlueBaseCloseCorner extends LinearOpMode {
             sleep(10);
         }
     }
-
 
 
 }
